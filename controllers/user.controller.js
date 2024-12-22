@@ -1,5 +1,9 @@
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+
+dotenv.config();
 
 export const register = async (req, res) => {
   const user = req.body;
@@ -94,9 +98,23 @@ export const login = async (req, res) => {
         message: "Invalid username or password",
       });
     }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        address: user.address,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1h" }
+    );
     return res.status(200).json({
       success: true,
       message: "Login successful",
+      access_token: token,
     });
   } catch (error) {
     console.error("Error during login:", error.message);
