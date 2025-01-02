@@ -46,6 +46,10 @@ userSchema.pre("save", async function (next) {
   } catch (err) {
     next(ere);
   }
+  if (user.isModified("role") && user.role !== "customer") {
+    user.role = "customer";
+  }
+  next();
 });
 
 userSchema.methods.comparePassword = async function (inputPassword) {

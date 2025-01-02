@@ -7,7 +7,6 @@ dotenv.config();
 
 export const register = async (req, res) => {
   const user = req.body;
-  let message = "";
   if (
     !user.username ||
     !user.password ||
