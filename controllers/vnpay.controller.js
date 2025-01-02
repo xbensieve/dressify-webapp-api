@@ -1,19 +1,26 @@
 import crypto from "crypto";
 import dotenv from "dotenv";
 import moment from "moment";
-import qs from "qs"; // This is used for query string generation
-
+import Order from "../models/order.model.js";
+import mongoose from "mongoose";
 dotenv.config();
 
 export const generatePaymentUrl = async (req, res) => {
   process.env.TZ = "Asia/Ho_Chi_Minh";
 
-  const { orderId, amount, bankCode, language } = req.body;
+  const { orderId } = req.body;
 
-  if (!orderId || !amount) {
-    return res.status(400).json({
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid order id" });
+  }
+
+  const order = await Order.findById(orderId);
+  if (!order) {
+    return res.status(401).json({
       success: false,
-      message: "orderId and amount are required",
+      message: "OrderId not found",
     });
   }
 
@@ -26,7 +33,7 @@ export const generatePaymentUrl = async (req, res) => {
   const vnpUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
   const returnUrl = process.env.VNP_RETURN_URL;
 
-  let locale = language || "vn";
+  let locale = "vn";
   let currCode = "VND";
 
   let vnp_Params = {
@@ -36,18 +43,14 @@ export const generatePaymentUrl = async (req, res) => {
     vnp_Locale: locale,
     vnp_CurrCode: currCode,
     vnp_TxnRef: orderId,
-    vnp_OrderInfo: `Thanh toan don hang: ${orderId}`,
+    vnp_OrderInfo: `Payment for ${orderId}`,
     vnp_OrderType: "other",
-    vnp_Amount: parseInt(amount, 10) * 100,
+    vnp_Amount: order.amount * 100,
     vnp_ReturnUrl: returnUrl,
     vnp_IpAddr: ipAddr,
     vnp_CreateDate: createDate,
     vnp_ExpireDate: expireDate,
   };
-
-  if (bankCode) {
-    vnp_Params["vnp_BankCode"] = bankCode;
-  }
 
   const sortedParams = sortParams(vnp_Params);
 
@@ -84,3 +87,38 @@ function sortParams(obj) {
 
   return sortedObj;
 }
+
+export const handlePaymentResponse = async (req, res) => {
+  const { vnp_ResponseCode, vnp_TxnRef } = req.query;
+  try {
+    if (!vnp_ResponseCode || !vnp_TxnRef) {
+      return res.status(400).json({
+        success: false,
+        message: "All fields are required",
+      });
+    }
+
+    const order = await Order.findById(vnp_TxnRef);
+    if (!order) {
+      return res.status(401).json({
+        success: false,
+        message: "OrderId not found",
+      });
+    }
+    if (vnp_ResponseCode !== "00") {
+      order.status = "Cancelled";
+    } else {
+      order.status = "Completed";
+    }
+    await order.save();
+    return res.status(200).json({
+      success: true,
+      message: "Updated order status successfully",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Error server",
+    });
+  }
+};

@@ -2,8 +2,25 @@ import Product from "../models/product.model.js";
 import mongoose from "mongoose";
 export const getProducts = async (req, res) => {
   try {
-    const products = await Product.find();
-    res.status(200).json({ success: true, data: products });
+    const { page = 1, limit = 1 } = req.query;
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+
+    const skip = (pageNumber - 1) * limitNumber;
+
+    const products = await Product.find().skip(skip).limit(limitNumber).lean();
+    const totalProducts = await Product.countDocuments();
+
+    const totalPages = Math.ceil(totalProducts / limitNumber);
+    res.status(200).json({
+      success: true,
+      data: products,
+      pagination: {
+        currentPage: pageNumber,
+        totalPages,
+        totalProducts,
+      },
+    });
   } catch (error) {
     console.error("Error in fetching products: ", error.message);
     res.status(500).json({ success: false, message: "Server error" });
