@@ -7,22 +7,16 @@ dotenv.config();
 
 export const register = async (req, res) => {
   const user = req.body;
-  if (
-    !user.username ||
-    !user.password ||
-    !user.email ||
-    !user.phoneNumber ||
-    !user.address
-  ) {
+  if (!user.username || !user.password || !user.email || !user.phoneNumber) {
     return res
       .status(400)
       .json({ success: false, message: "Please provide all fields" });
   }
 
-  if (user.username.trim().length < 3) {
+  if (user.username.trim().length < 8) {
     return res.status(400).json({
       success: false,
-      message: "Username must be at least 3 characters long",
+      message: "Username must be at least 8 characters long",
     });
   }
 
@@ -49,14 +43,28 @@ export const register = async (req, res) => {
     });
   }
 
-  if (user.address.trim().length === 0) {
-    return res.status(400).json({
-      success: false,
-      message: "Address must not be empty",
-    });
-  }
-
   try {
+    const existingUser = await User.findOne({
+      $or: [
+        { username: user.username },
+        { email: user.email },
+        { phoneNumber: user.phoneNumber },
+      ],
+    });
+    if (existingUser) {
+      const conflictField =
+        existingUser.username === user.username
+          ? "Username"
+          : existingUser.email === user.email
+          ? "Email"
+          : "Phone number";
+
+      return res.status(409).json({
+        success: false,
+        message: `${conflictField} already exists`,
+      });
+    }
+
     const newUser = new User(user);
     await newUser.save();
     res.status(201).json({ success: true, message: "Register successful" });

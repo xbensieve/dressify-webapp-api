@@ -26,7 +26,27 @@ export const getProducts = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
-
+export const getProductById = async (req, res) => {
+  const { id } = req.params;
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    return res
+      .status(404)
+      .json({ success: false, message: "Invalid product id" });
+  }
+  try {
+    const selectedProduct = await Product.findById(id).lean();
+    if (!selectedProduct) {
+      return res.status(401).json({
+        success: false,
+        message: "Product not found",
+      });
+    }
+    res.status(200).json({ success: true, data: selectedProduct });
+  } catch (error) {
+    console.error("Error in updating products: ", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 export const addProduct = async (req, res) => {
   const product = req.body;
   if (

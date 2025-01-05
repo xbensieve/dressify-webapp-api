@@ -105,16 +105,17 @@ export const handlePaymentResponse = async (req, res) => {
         message: "OrderId not found",
       });
     }
+    let redirectUrl = "";
     if (vnp_ResponseCode !== "00") {
-      order.status = "Cancelled";
+      //order.status = "Cancelled";
+      Order.findByIdAndDelete(vnp_TxnRef);
+      redirectUrl = "https://selling-clothes-website-five.vercel.app/failed"
     } else {
       order.status = "Completed";
+      redirectUrl = "https://selling-clothes-website-five.vercel.app/success";
     }
     await order.save();
-    return res.status(200).json({
-      success: true,
-      message: "Updated order status successfully",
-    });
+    res.redirect(redirectUrl);
   } catch (error) {
     return res.status(500).json({
       success: false,

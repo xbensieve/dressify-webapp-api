@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
   },
   address: {
     type: String,
-    required: true,
+    default: "Not provided yet",
   },
   createAt: {
     type: Date,
