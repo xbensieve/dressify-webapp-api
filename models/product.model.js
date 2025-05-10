@@ -4,31 +4,30 @@ const productSchema = new mongoose.Schema(
   {
     name: {
       type: String,
-      required: true,
-    },
-    unitPrice: {
-      type: Number,
-      required: true,
-    },
-    image: {
-      type: String,
-      required: true,
-    },
-    sizes: {
-      type: [String],
-      required: true,
-    },
-    colors: {
-      type: [String],
-      required: true,
+      required: [true, "Product name is required"],
+      trim: true,
+      maxlength: [100, "Product name cannot exceed 100 characters"],
     },
     description: {
       type: String,
-      required: true,
+      default: "No description provided",
+      trim: true,
     },
-    stock: {
+    price: {
       type: Number,
-      required: true,
+      required: [true, "Product price is required"],
+      min: [0, "Price cannot be negative"],
+    },
+    category_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Category",
+      required: [true, "Category ID is required"],
+    },
+    seller_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: [true, "Seller ID is required"],
+      index: true,
     },
   },
   {
