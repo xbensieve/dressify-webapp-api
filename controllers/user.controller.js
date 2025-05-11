@@ -2,7 +2,8 @@ import User from "../models/user.model.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import mailer from "../utils/mailer.js";
-
+import { verify } from "../services/googleAuth.js";
+import { generateTokens } from "../utils/token.js";
 dotenv.config();
 
 // Register a new user
@@ -227,26 +228,99 @@ export const login = async (req, res) => {
         .json({ success: false, message: "Invalid username or password" });
     }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        phone: user.phone,
-        role: user.role,
-      },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const { accessToken, refreshToken } = generateTokens(user);
 
     res.status(200).json({
       success: true,
       message: "Login successful",
-      access_token: token,
+      access_token: accessToken,
+      refresh_token: refreshToken,
     });
   } catch (error) {
     console.error("Error during login:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+// Google login
+export const loginGoogle = async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Token is required" });
+  }
+
+  try {
+    const userData = await verify(token);
+
+    // Check if the user already exists
+    let user = await User.findOne({ googleId: userData.id });
+
+    if (!user) {
+      // Create a new user if not found
+      user = new User({
+        username: userData.email,
+        first_name: userData.family_name,
+        last_name: userData.given_name,
+        password_hash: null,
+        phone: null,
+        email: userData.email,
+        role: "customer",
+        status: "active",
+        isConfirmed: true,
+        googleId: userData.id,
+        avatar: userData.picture,
+      });
+      await user.save();
+    }
+
+    const { accessToken, refreshToken } = generateTokens(user);
+
+    res.status(200).json({
+      success: true,
+      message: "Login successful",
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+  } catch (error) {
+    console.error("Error during Google login:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+//Endpoint refreshToken
+export const refreshAccessToken = async (req, res) => {
+  const { refresh_token } = req.body;
+
+  if (!refresh_token) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Refresh token is required" });
+  }
+
+  try {
+    jwt.verify(refresh_token, process.env.JWT_REFRESH_SECRET, (err, user) => {
+      if (err) {
+        return res
+          .status(403)
+          .json({ success: false, message: "Invalid refresh token" });
+      }
+
+      const newAccessToken = jwt.sign(
+        { id: user.id, username: user.username, role: user.role },
+        process.env.JWT_SECRET,
+        { expiresIn: "15m" }
+      );
+
+      res.status(200).json({
+        success: true,
+        access_token: newAccessToken,
+      });
+    });
+  } catch (error) {
+    console.error("Error during token refresh:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };

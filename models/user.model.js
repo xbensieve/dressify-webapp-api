@@ -11,27 +11,43 @@ const userSchema = new mongoose.Schema(
     },
     first_name: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
       trim: true,
     },
     last_name: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
       trim: true,
     },
     password_hash: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
     },
     phone: {
       type: String,
-      required: true,
+      required: function () {
+        return !this.googleId;
+      },
     },
     email: {
       type: String,
       required: true,
       unique: true,
       trim: true,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+    },
+    avatar: {
+      type: String,
+      default: null,
     },
     role: {
       type: String,
@@ -57,23 +73,23 @@ const userSchema = new mongoose.Schema(
       default: null,
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
 userSchema.pre("save", async function (next) {
   const user = this;
-  if (!user.isModified("password_hash")) return next();
+
+  if (!user.isModified("password_hash") || !user.password_hash) {
+    return next();
+  }
+
   try {
     const salt = await bcrypt.genSalt(10);
     user.password_hash = await bcrypt.hash(user.password_hash, salt);
     next();
   } catch (err) {
-    next(ere);
+    next(err);
   }
-
-  next();
 });
 
 userSchema.methods.comparePassword = async function (inputPassword) {
