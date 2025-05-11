@@ -1,10 +1,10 @@
 import mongoose from "mongoose";
 
-const orderDetailSchema = new mongoose.Schema(
+const cartItemSchema = new mongoose.Schema(
   {
-    order_id: {
+    cart_id: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Order",
+      ref: "Cart",
       required: true,
     },
     product_id: {
@@ -22,16 +22,11 @@ const orderDetailSchema = new mongoose.Schema(
       required: true,
       min: 1,
     },
-    price_at_purchase: {
-      type: Number,
-      required: true,
-      min: 0,
-    },
   },
   {
     timestamps: true,
   }
 );
 
-const OrderDetail = mongoose.model("OrderDetail", orderDetailSchema);
-export default OrderDetail;
+const CartItem = mongoose.model("CartItem", cartItemSchema);
+export default CartItem;
