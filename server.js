@@ -9,7 +9,7 @@ import userRoutes from "./routes/user.route.js";
 import orderRoutes from "./routes/order.route.js";
 import vnpayRoutes from "./routes/vnpay.route.js";
 import categoryRoutes from "./routes/category.route.js";
-
+import generalRoutes from "./routes/general.route.js";
 dotenv.config();
 
 const app = express();
@@ -27,7 +27,7 @@ app.use(helmet());
 
 // Apply rate limiter to all API routes
 app.use("/api", limiter);
-
+app.use("/", generalRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);
