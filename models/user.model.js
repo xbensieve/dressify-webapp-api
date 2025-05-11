@@ -44,6 +44,18 @@ const userSchema = new mongoose.Schema(
       enum: ["active", "inactive"],
       default: "active",
     },
+    isConfirmed: {
+      type: Boolean,
+      default: false,
+    },
+    confirmationCode: {
+      type: String,
+      default: null,
+    },
+    expireConfirmationCode: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -60,9 +72,7 @@ userSchema.pre("save", async function (next) {
   } catch (err) {
     next(ere);
   }
-  if (user.isModified("role") && user.role !== "customer") {
-    user.role = "customer";
-  }
+
   next();
 });
 
