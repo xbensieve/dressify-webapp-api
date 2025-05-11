@@ -9,7 +9,7 @@ import userRoutes from "./routes/user.route.js";
 import orderRoutes from "./routes/order.route.js";
 import vnpayRoutes from "./routes/vnpay.route.js";
 import categoryRoutes from "./routes/category.route.js";
-import { specs, swaggerUi } from "./utils/swagger.js";
+
 dotenv.config();
 
 const app = express();
@@ -24,7 +24,7 @@ const limiter = rateLimit({
 app.use(cors());
 app.use(express.json());
 app.use(helmet());
-app.use("/", swaggerUi.serve, swaggerUi.setup(specs));
+
 // Apply rate limiter to all API routes
 app.use("/api", limiter);
 
