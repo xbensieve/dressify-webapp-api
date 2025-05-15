@@ -1,5 +1,7 @@
 import Product from "../models/product.model.js";
+import ProductVariation from "../models/productVariation.model.js";
 import mongoose from "mongoose";
+
 export const getProducts = async (req, res) => {
   try {
     const { page = 1, limit = 1 } = req.query;
@@ -48,28 +50,61 @@ export const getProductById = async (req, res) => {
   }
 };
 export const addProduct = async (req, res) => {
-  const product = req.body;
-  if (
-    !product.name ||
-    !product.unitPrice ||
-    !product.image ||
-    !product.sizes ||
-    !product.colors ||
-    !product.description ||
-    !product.stock
-  ) {
+  const { product, variations } = req.body;
+
+  if (!product || !variations || !Array.isArray(variations)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid product or variations data",
+    });
+  }
+
+  const { name, description, price, category_id } = product;
+  if (!name || !description || !price || !category_id) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide all product fields",
+    });
+  }
+
+  if (isNaN(price) || price <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Price must be a positive number",
+    });
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(category_id)) {
     return res
       .status(400)
-      .json({ success: false, message: "Please provide all fields!" });
+      .json({ success: false, message: "Invalid category id" });
   }
-  const newProduct = new Product(product);
+
+  const seller_id = req.user.id;
+
+  const newProduct = new Product({
+    ...product,
+    seller_id,
+  });
+
   try {
-    await newProduct.save();
-    res
-      .status(201)
-      .json({ success: true, message: "Product created successfully" });
+    const savedProduct = await newProduct.save();
+
+    const productVariations = variations.map((variation) => ({
+      ...variation,
+      product_id: savedProduct._id,
+    }));
+
+    const savedVariations = await ProductVariation.insertMany(
+      productVariations
+    );
+
+    res.status(201).json({
+      success: true,
+      data: { product: savedProduct, variations: savedVariations },
+    });
   } catch (error) {
-    console.error("Error in create product: ", error.message);
+    console.error("Error in adding products: ", error.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
