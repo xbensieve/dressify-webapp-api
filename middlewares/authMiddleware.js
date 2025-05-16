@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-function verifyToken(req, res, next) {
+export function verifyToken(req, res, next) {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) {
     return res.status(401).json({ message: "No token provided" });
@@ -14,11 +14,9 @@ function verifyToken(req, res, next) {
   }
 }
 
-function requireAdmin(req, res, next) {
+export function requireAdmin(req, res, next) {
   if (req.user.role !== "admin") {
     return res.status(403).json({ message: "Access denied" });
   }
   next();
 }
-
-module.exports = { verifyToken, requireAdmin };

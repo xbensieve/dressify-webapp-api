@@ -1,6 +1,4 @@
 import express from "express";
-import mongoose from "mongoose";
-import Product from "../models/product.model.js";
 import {
   getProducts,
   addProduct,
@@ -8,12 +6,16 @@ import {
   deleteProduct,
   getProductById,
 } from "../controllers/product.controller.js";
+
+import { verifyToken, requireAdmin } from "../middlewares/authMiddleware.js";
+
 const router = express.Router();
+
 router.get("/", getProducts);
 
 router.get("/:id", getProductById);
 
-router.post("/", addProduct);
+router.post("/", verifyToken, requireAdmin, addProduct);
 
 router.put("/:id", updateProduct);
 

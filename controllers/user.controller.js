@@ -258,7 +258,9 @@ export const loginGoogle = async (req, res) => {
     const userData = await verify(token);
 
     // Check if the user already exists
-    let user = await User.findOne({ googleId: userData.id });
+    let user = await User.findOne({
+      $or: [{ googleId: userData.id }, { email: userData.email }],
+    });
 
     if (!user) {
       // Create a new user if not found
@@ -323,6 +325,30 @@ export const refreshAccessToken = async (req, res) => {
     });
   } catch (error) {
     console.error("Error during token refresh:", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
+
+export const profile = async (req, res) => {
+  const { id } = req.user;
+
+  try {
+    const user = await User.findById(id).select(
+      "-password_hash -confirmationCode -expireConfirmationCode -createdAt -updatedAt -googleId --__v"
+    );
+
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error.message);
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
