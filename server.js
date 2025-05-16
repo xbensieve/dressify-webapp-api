@@ -26,7 +26,6 @@ app.use(express.json());
 app.use(helmet());
 
 // Apply rate limiter to all API routes
-app.use("/api", limiter);
 app.use("/", generalRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/users", userRoutes);
