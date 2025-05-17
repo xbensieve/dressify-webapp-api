@@ -41,13 +41,12 @@ const userSchema = new mongoose.Schema(
       unique: true,
       trim: true,
     },
-    googleId: {
-      type: String,
-      unique: true,
-      sparse: true,
-    },
     avatar: {
       type: String,
+      default: null,
+    },
+    DOB: {
+      type: Date,
       default: null,
     },
     role: {
