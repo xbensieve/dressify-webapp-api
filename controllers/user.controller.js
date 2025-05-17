@@ -8,11 +8,19 @@ dotenv.config();
 
 // Register a new user
 export const register = async (req, res) => {
-  const { username, first_name, last_name, password, phone, email, role } =
+  const { username, first_name, last_name, password, phone, email, dob, role } =
     req.body;
 
   // Validate required fields
-  if (!username || !first_name || !last_name || !password || !phone || !email) {
+  if (
+    !username ||
+    !first_name ||
+    !last_name ||
+    !password ||
+    !phone ||
+    !email ||
+    !dob
+  ) {
     return res
       .status(400)
       .json({ success: false, message: "All fields are required" });
@@ -48,6 +56,33 @@ export const register = async (req, res) => {
     return res
       .status(400)
       .json({ success: false, message: "Phone number must be 10-15 digits" });
+  }
+
+  // Validate date of birth: must be in the past and user must be strictly over 18
+  const dobDate = new Date(dob);
+  const today = new Date();
+
+  // Check if DOB is in the future
+  if (dobDate > today) {
+    return res
+      .status(400)
+      .json({ success: false, message: "Date of birth must be in the past" });
+  }
+
+  // Calculate age
+  let age = today.getFullYear() - dobDate.getFullYear();
+  const monthDiff = today.getMonth() - dobDate.getMonth();
+  const dayDiff = today.getDate() - dobDate.getDate();
+
+  if (monthDiff < 0 || (monthDiff === 0 && dayDiff <= 0)) {
+    age--;
+  }
+
+  // Check if user is strictly over 18
+  if (age <= 18) {
+    return res
+      .status(400)
+      .json({ success: false, message: "You must be over 18 years old" });
   }
 
   try {
@@ -176,6 +211,7 @@ export const register = async (req, res) => {
       password_hash: password,
       phone,
       email,
+      DOB: dob,
       role,
       status: "active",
       isConfirmed: false,
@@ -187,7 +223,7 @@ export const register = async (req, res) => {
     res.status(201).json({
       success: true,
       message:
-        "User registered successfully. Confirmation code sent to your email. Please verify.",
+        "Your registration was successful. A confirmation code has been sent to your email. Please check your inbox to verify your account.",
     });
 
     // Send confirmation email
@@ -202,7 +238,7 @@ export const register = async (req, res) => {
   }
 };
 
-// Login a user
+// Login an user
 export const login = async (req, res) => {
   const { username, password } = req.body;
 
@@ -258,9 +294,7 @@ export const loginGoogle = async (req, res) => {
     const userData = await verify(token);
 
     // Check if the user already exists
-    let user = await User.findOne({
-      $or: [{ googleId: userData.id }, { email: userData.email }],
-    });
+    let user = await User.findOne(userData.email);
 
     if (!user) {
       // Create a new user if not found
@@ -274,7 +308,6 @@ export const loginGoogle = async (req, res) => {
         role: "customer",
         status: "active",
         isConfirmed: true,
-        googleId: userData.id,
         avatar: userData.picture,
       });
       await user.save();
@@ -334,7 +367,7 @@ export const profile = async (req, res) => {
 
   try {
     const user = await User.findById(id).select(
-      "-password_hash -confirmationCode -expireConfirmationCode -createdAt -updatedAt -googleId --__v"
+      "-password_hash -confirmationCode -expireConfirmationCode -createdAt -updatedAt -__v"
     );
 
     if (!user) {
