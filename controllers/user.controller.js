@@ -292,16 +292,18 @@ export const loginGoogle = async (req, res) => {
 
   try {
     const userData = await verify(token);
-
+    console.log("User data from Google:", userData);
     // Check if the user already exists
-    let user = await User.findOne(userData.email);
+    let user = await User.findOne({
+      $or: [{ username: userData.email }, { email: userData.email }],
+    });
 
     if (!user) {
       // Create a new user if not found
       user = new User({
         username: userData.email,
-        first_name: userData.family_name,
-        last_name: userData.given_name,
+        first_name: userData.given_name,
+        last_name: userData.family_name,
         password_hash: null,
         phone: null,
         email: userData.email,

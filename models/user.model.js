@@ -11,29 +11,22 @@ const userSchema = new mongoose.Schema(
     },
     first_name: {
       type: String,
-      required: function () {
-        return !this.googleId;
-      },
+      required: true,
       trim: true,
     },
     last_name: {
       type: String,
-      required: function () {
-        return !this.googleId;
-      },
+      required: true,
       trim: true,
     },
     password_hash: {
       type: String,
-      required: function () {
-        return !this.googleId;
-      },
+      default: null,
     },
     phone: {
       type: String,
-      required: function () {
-        return !this.googleId;
-      },
+      default: null,
+      unique: true,
     },
     email: {
       type: String,

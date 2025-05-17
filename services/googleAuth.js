@@ -7,13 +7,6 @@ export const verify = async (token) => {
     audience: process.env.GOOGLE_CLIENT_ID,
   });
   const payload = ticket.getPayload();
-  const userId = payload["sub"];
 
-  return {
-    id: userId,
-    email: payload.email,
-    name: payload.name,
-    picture: payload.picture,
-  };
-  
+  return payload;
 };
