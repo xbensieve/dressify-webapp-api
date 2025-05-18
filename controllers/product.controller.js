@@ -1,6 +1,8 @@
 import Product from "../models/product.model.js";
 import ProductVariation from "../models/productVariation.model.js";
 import mongoose from "mongoose";
+import cloudinary from "../utils/cloudinary.js";
+import ProductImage from "../models/productImage.model.js";
 
 export const getProducts = async (req, res) => {
   try {
@@ -50,8 +52,9 @@ export const getProductById = async (req, res) => {
   }
 };
 export const addProduct = async (req, res) => {
-  const { product, variations } = req.body;
-
+  let { product, variations } = req.body;
+  product = JSON.parse(product);
+  variations = JSON.parse(variations);
   if (!product || !variations || !Array.isArray(variations)) {
     return res.status(400).json({
       success: false,
@@ -99,9 +102,34 @@ export const addProduct = async (req, res) => {
       productVariations
     );
 
+    // Handle multiple images for the product (not per variation)
+    const images = req.files || [];
+    const imageDocs = [];
+
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i];
+      const uploadResult = await cloudinary.uploader.upload(file.path, {
+        folder: "products",
+      });
+
+      imageDocs.push({
+        productId: savedProduct._id,
+        imageUrl: uploadResult.secure_url,
+        altText: file.originalname,
+        displayOrder: i,
+        isPrimary: i === 0,
+      });
+    }
+
+    const savedImages = await ProductImage.insertMany(imageDocs);
+
     res.status(201).json({
       success: true,
-      data: { product: savedProduct, variations: savedVariations },
+      data: {
+        product: savedProduct,
+        variations: savedVariations,
+        images: savedImages,
+      },
     });
   } catch (error) {
     console.error("Error in adding products: ", error.message);
