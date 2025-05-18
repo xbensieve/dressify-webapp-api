@@ -125,6 +125,7 @@ export const addProduct = async (req, res) => {
 
     res.status(201).json({
       success: true,
+      message: "Product added successfully",
       data: {
         product: savedProduct,
         variations: savedVariations,
