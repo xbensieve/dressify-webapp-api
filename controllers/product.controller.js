@@ -3,6 +3,84 @@ import ProductVariation from "../models/productVariation.model.js";
 import mongoose from "mongoose";
 import cloudinary from "../utils/cloudinary.js";
 import ProductImage from "../models/productImage.model.js";
+import Category from "../models/category.model.js";
+
+export const searchProducts = async (req, res) => {
+  try {
+    const {
+      keyword = "",
+      sortBy = "latest",
+      page = 1,
+      limit = 10,
+      minPrice,
+      maxPrice,
+    } = req.query;
+
+    const categoryMatch = keyword
+      ? await Category.find({
+          name: { $regex: keyword, $options: "i" },
+        }).select("_id")
+      : [];
+    const categoryIds = categoryMatch.map((category) => category._id);
+    const query = {
+      $or: [
+        { name: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+        ...(categoryIds.length > 0
+          ? [{ category_id: { $in: categoryIds } }]
+          : []),
+      ],
+    };
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+    let sort = {};
+    if (sortBy === "price_asc") sort.price = 1;
+    else if (sortBy === "price_des") sort.price = -1;
+    else sort.createdAt = -1;
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const total = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+    const productIds = products.map((p) => p._id);
+    const variations = await ProductVariation.find({
+      product_id: { $in: productIds },
+    }).lean();
+    const images = await ProductImage.find({
+      productId: { $in: productIds },
+    }).lean();
+
+    const productMap = products.map((product) => ({
+      ...product,
+      variations: variations.filter(
+        (v) => v.product_id.toString() === product._id.toString()
+      ),
+      images: images.filter(
+        (img) => img.productId.toString() === product._id.toString()
+      ),
+    }));
+    res.status(200).json({
+      success: true,
+      data: productMap,
+      pagination: {
+        currentPage: Number(page),
+        totalPages: Math.ceil(total / Number(limit)),
+        totalProducts: total,
+      },
+    });
+  } catch (error) {
+    console.error("Error in searching products: ", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 export const getProducts = async (req, res) => {
   try {
