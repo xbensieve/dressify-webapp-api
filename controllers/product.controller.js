@@ -25,7 +25,7 @@ export const searchProducts = async (req, res) => {
   req.query.sortBy = req.query.sortBy ?? "latest";
   req.query.page = req.query.page ?? 1;
   req.query.limit = req.query.limit ?? 10;
-  
+
   try {
     const {
       keyword = "",
@@ -129,21 +129,38 @@ export const getProducts = async (req, res) => {
   }
 };
 export const getProductById = async (req, res) => {
-  const { id } = req.params;
+  const { id } = req.body;
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res
       .status(404)
       .json({ success: false, message: "Invalid product id" });
   }
   try {
-    const selectedProduct = await Product.findById(id).lean();
-    if (!selectedProduct) {
-      return res.status(401).json({
+    const product = await Product.findById(id).lean();
+    // Check if product exists
+    if (!product) {
+      return res.status(404).json({
         success: false,
         message: "Product not found",
       });
     }
-    res.status(200).json({ success: true, data: selectedProduct });
+    const variations = await ProductVariation.find({
+      product_id: product._id,
+    }).lean();
+    const images = await ProductImage.find({
+      productId: product._id,
+    }).lean();
+    const category = await Category.findById(product.category_id).lean();
+    const productWithDetails = {
+      ...product,
+      variations,
+      images,
+      category,
+    };
+    res.status(200).json({
+      success: true,
+      data: productWithDetails,
+    });
   } catch (error) {
     console.error("Error in updating products: ", error.message);
     res.status(500).json({ success: false, message: "Server error" });
