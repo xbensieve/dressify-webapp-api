@@ -11,7 +11,6 @@ const productVariationSchema = new mongoose.Schema(
     size: {
       type: String,
       trim: true,
-      enum: ["XS", "S", "M", "L", "XL", "XXL"],
     },
     color: {
       type: String,

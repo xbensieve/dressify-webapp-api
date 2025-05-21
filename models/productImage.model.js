@@ -7,11 +7,6 @@ const productImageSchema = new mongoose.Schema(
       ref: "Product",
       required: true,
     },
-    variationId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "ProductVariation",
-      required: true,
-    },
     imageUrl: {
       type: String,
       required: true,

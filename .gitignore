@@ -10,7 +10,7 @@ yarn-error.log*
 
 # Dependency directories
 node_modules/
-
+uploads/
 # Build output
 dist/
 build/

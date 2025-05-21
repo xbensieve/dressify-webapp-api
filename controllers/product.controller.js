@@ -1,6 +1,86 @@
 import Product from "../models/product.model.js";
 import ProductVariation from "../models/productVariation.model.js";
 import mongoose from "mongoose";
+import cloudinary from "../utils/cloudinary.js";
+import ProductImage from "../models/productImage.model.js";
+import Category from "../models/category.model.js";
+
+export const searchProducts = async (req, res) => {
+  try {
+    const {
+      keyword = "",
+      sortBy = "latest",
+      page = 1,
+      limit = 10,
+      minPrice,
+      maxPrice,
+    } = req.query;
+
+    const categoryMatch = keyword
+      ? await Category.find({
+          name: { $regex: keyword, $options: "i" },
+        }).select("_id")
+      : [];
+    const categoryIds = categoryMatch.map((category) => category._id);
+    const query = {
+      $or: [
+        { name: { $regex: keyword, $options: "i" } },
+        { description: { $regex: keyword, $options: "i" } },
+        ...(categoryIds.length > 0
+          ? [{ category_id: { $in: categoryIds } }]
+          : []),
+      ],
+    };
+    if (minPrice || maxPrice) {
+      query.price = {};
+      if (minPrice) query.price.$gte = Number(minPrice);
+      if (maxPrice) query.price.$lte = Number(maxPrice);
+    }
+    let sort = {};
+    if (sortBy === "price_asc") sort.price = 1;
+    else if (sortBy === "price_des") sort.price = -1;
+    else sort.createdAt = -1;
+
+    const skip = (Number(page) - 1) * Number(limit);
+
+    const total = await Product.countDocuments(query);
+
+    const products = await Product.find(query)
+      .sort(sort)
+      .skip(skip)
+      .limit(Number(limit))
+      .lean();
+    const productIds = products.map((p) => p._id);
+    const variations = await ProductVariation.find({
+      product_id: { $in: productIds },
+    }).lean();
+    const images = await ProductImage.find({
+      productId: { $in: productIds },
+    }).lean();
+
+    const productMap = products.map((product) => ({
+      ...product,
+      variations: variations.filter(
+        (v) => v.product_id.toString() === product._id.toString()
+      ),
+      images: images.filter(
+        (img) => img.productId.toString() === product._id.toString()
+      ),
+    }));
+    res.status(200).json({
+      success: true,
+      data: productMap,
+      pagination: {
+        currentPage: Number(page),
+        totalPages: Math.ceil(total / Number(limit)),
+        totalProducts: total,
+      },
+    });
+  } catch (error) {
+    console.error("Error in searching products: ", error.message);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+};
 
 export const getProducts = async (req, res) => {
   try {
@@ -50,8 +130,9 @@ export const getProductById = async (req, res) => {
   }
 };
 export const addProduct = async (req, res) => {
-  const { product, variations } = req.body;
-
+  let { product, variations } = req.body;
+  product = JSON.parse(product);
+  variations = JSON.parse(variations);
   if (!product || !variations || !Array.isArray(variations)) {
     return res.status(400).json({
       success: false,
@@ -99,9 +180,35 @@ export const addProduct = async (req, res) => {
       productVariations
     );
 
+    // Handle multiple images for the product (not per variation)
+    const images = req.files || [];
+    const imageDocs = [];
+
+    for (let i = 0; i < images.length; i++) {
+      const file = images[i];
+      const uploadResult = await cloudinary.uploader.upload(file.path, {
+        folder: "products",
+      });
+
+      imageDocs.push({
+        productId: savedProduct._id,
+        imageUrl: uploadResult.secure_url,
+        altText: file.originalname,
+        displayOrder: i,
+        isPrimary: i === 0,
+      });
+    }
+
+    const savedImages = await ProductImage.insertMany(imageDocs);
+
     res.status(201).json({
       success: true,
-      data: { product: savedProduct, variations: savedVariations },
+      message: "Product added successfully",
+      data: {
+        product: savedProduct,
+        variations: savedVariations,
+        images: savedImages,
+      },
     });
   } catch (error) {
     console.error("Error in adding products: ", error.message);
