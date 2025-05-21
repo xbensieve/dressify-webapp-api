@@ -6,6 +6,26 @@ import ProductImage from "../models/productImage.model.js";
 import Category from "../models/category.model.js";
 
 export const searchProducts = async (req, res) => {
+  //check if there no data in the query
+  if (Object.keys(req.query).length === 0) {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide search parameters",
+    });
+  }
+  //check if the query is not empty
+  if (req.query.keyword === "") {
+    return res.status(400).json({
+      success: false,
+      message: "Please provide a keyword to search",
+    });
+  }
+  // Add default values for the query if not provided
+  req.query.keyword = req.query.keyword ?? "";
+  req.query.sortBy = req.query.sortBy ?? "latest";
+  req.query.page = req.query.page ?? 1;
+  req.query.limit = req.query.limit ?? 10;
+  
   try {
     const {
       keyword = "",
