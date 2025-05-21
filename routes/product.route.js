@@ -18,14 +18,12 @@ router.get("/", getProducts);
 
 router.get("/search", searchProducts);
 
-router.get("/:id", getProductById);
+router.post("/id", getProductById);
 
 router.post("/", verifyToken, requireAdmin, upload.array("images"), addProduct);
 
 router.put("/:id", updateProduct);
 
 router.delete("/:id", deleteProduct);
-
-
 
 export default router;
