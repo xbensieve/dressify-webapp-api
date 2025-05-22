@@ -42,7 +42,7 @@ app.use("/api/vnpay", vnpayRoutes);
 
 app.use("/api/categories", categoryRoutes);
 
-app.use("api/carts", cartRoutes);
+app.use("/api/carts", cartRoutes);
 
 app.listen(5000, () => {
   connectDB();

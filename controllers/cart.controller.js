@@ -2,7 +2,7 @@ import Cart from "../models/cart.model.js";
 import CartItem from "../models/cartItem.model.js";
 import Product from "../models/product.model.js";
 import ProductVariant from "../models/productVariation.model.js";
-import User from "../models/user.model.js";
+import ProductImage from "../models/productImage.model.js";
 
 //Add to cart
 export const addToCart = async (req, res) => {
@@ -104,36 +104,48 @@ export const getCart = async (req, res) => {
     const cartItems = await CartItem.find({ cart_id: cart._id })
       .populate("product_id")
       .populate("variation_id");
-    //Response details in products and variations
+    // Lấy danh sách productId và variationId
     const productIds = cartItems.map((item) => item.product_id._id);
     const variationIds = cartItems.map((item) => item.variation_id._id);
-    const products = await Product.find({ _id: { $in: productIds } });
-    const variations = await ProductVariant.find({
-      _id: { $in: variationIds },
-    });
-    //Map cart items to include product and variation details
+    // Lấy thông tin sản phẩm, biến thể và ảnh
+    const [products, variations, productImages] = await Promise.all([
+      Product.find({ _id: { $in: productIds } }),
+      ProductVariant.find({ _id: { $in: variationIds } }),
+      ProductImage.find({ productId: { $in: productIds } }),
+    ]);
+    // Map cart items để trả về chi tiết sản phẩm, biến thể và số lượng đã add
     const cartItemsWithDetails = cartItems.map((item) => {
       const product = products.find(
-        (product) => product._id.toString() === item.product_id._id.toString()
+      (product) => product._id.toString() === item.product_id._id.toString()
       );
       const variation = variations.find(
-        (variation) =>
-          variation._id.toString() === item.variation_id._id.toString()
+      (variation) => variation._id.toString() === item.variation_id._id.toString()
+      );
+      const images = productImages.filter(
+      (image) => image.productId.toString() === product._id.toString()
       );
       return {
-        ...item._doc,
-        product,
-        variation,
+      product: {
+        ...product._doc,
+        images: images.map((image) => image.imageUrl),
+      },
+      variation: {
+        ...variation._doc,
+      },
+      quantity: item.quantity, // Số lượng người dùng đã add vào cho variation này
+      cartItemId: item._id,
       };
     });
-    //Return response
+    // Trả về response
     res.status(200).json({
       success: true,
       data: {
-        cart: {
-          ...cart._doc,
-          items: cartItemsWithDetails,
-        },
+      cart: {
+        ...cart._doc,
+        total_price: cart.total_price,
+        total_items: cartItemsWithDetails.length,
+        items: cartItemsWithDetails,
+      },
       },
     });
   } catch (error) {
