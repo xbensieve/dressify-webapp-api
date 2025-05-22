@@ -102,32 +102,6 @@ export const searchProducts = async (req, res) => {
   }
 };
 
-export const getProducts = async (req, res) => {
-  try {
-    const { page = 1, limit = 1 } = req.query;
-    const pageNumber = parseInt(page, 10);
-    const limitNumber = parseInt(limit, 10);
-
-    const skip = (pageNumber - 1) * limitNumber;
-
-    const products = await Product.find().skip(skip).limit(limitNumber).lean();
-    const totalProducts = await Product.countDocuments();
-
-    const totalPages = Math.ceil(totalProducts / limitNumber);
-    res.status(200).json({
-      success: true,
-      data: products,
-      pagination: {
-        currentPage: pageNumber,
-        totalPages,
-        totalProducts,
-      },
-    });
-  } catch (error) {
-    console.error("Error in fetching products: ", error.message);
-    res.status(500).json({ success: false, message: "Server error" });
-  }
-};
 export const getProductById = async (req, res) => {
   const { id } = req.body;
   if (!mongoose.Types.ObjectId.isValid(id)) {
@@ -166,6 +140,7 @@ export const getProductById = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+
 export const addProduct = async (req, res) => {
   let { product, variations } = req.body;
   product = JSON.parse(product);
