@@ -7,6 +7,10 @@ const cartSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    total_price: {
+      type: Number,
+      default: 0,
+    },
   },
   {
     timestamps: true,

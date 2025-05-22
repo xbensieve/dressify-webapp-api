@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  getProducts,
   addProduct,
   updateProduct,
   deleteProduct,
@@ -13,8 +12,6 @@ import { verifyToken, requireAdmin } from "../middlewares/authMiddleware.js";
 const upload = multer({ dest: "uploads/" });
 
 const router = express.Router();
-
-router.get("/", getProducts);
 
 router.get("/search", searchProducts);
 
