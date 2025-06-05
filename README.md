@@ -56,7 +56,7 @@ Follow these steps to set up the project locally:
 
 1. **Clone the Repository**:
    ```bash
-   git clone https://github.com/xbensieve/dressify-webapp-server.git
+   git clone https://github.com/xbensieve/dressify-webapp-api.git
    cd selling-clothes-webapp/BE
 2. Install Dependencies:
    ```bash
