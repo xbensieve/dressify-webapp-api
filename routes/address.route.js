@@ -1,9 +1,9 @@
 import express from "express";
-import { createOrder } from "../controllers/order.controller.js";
+import { createAddress } from "../controllers/address.controller.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", verifyToken, createOrder);
+router.post("/", verifyToken, createAddress);
 
 export default router;

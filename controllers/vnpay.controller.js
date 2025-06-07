@@ -107,11 +107,10 @@ export const handlePaymentResponse = async (req, res) => {
     }
     let redirectUrl = "";
     if (vnp_ResponseCode !== "00") {
-      //order.status = "Cancelled";
-      Order.findByIdAndDelete(vnp_TxnRef);
-      redirectUrl = "https://selling-clothes-website-five.vercel.app/failed"
+      order.order_status = "pending";
+      redirectUrl = "https://selling-clothes-website-five.vercel.app/failed";
     } else {
-      order.status = "Completed";
+      order.order_status = "completed";
       redirectUrl = "https://selling-clothes-website-five.vercel.app/success";
     }
     await order.save();
