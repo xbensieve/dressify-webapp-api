@@ -13,6 +13,7 @@ import vnpayRoutes from "./routes/vnpay.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import generalRoutes from "./routes/general.route.js";
 import cartRoutes from "./routes/cart.route.js";
+import addressRoutes from "./routes/address.route.js";
 import { fetchAIResponse } from "./services/geminiChatBot.js";
 
 dotenv.config();
@@ -97,6 +98,8 @@ app.use("/api/vnpay", vnpayRoutes);
 app.use("/api/categories", categoryRoutes);
 
 app.use("/api/carts", cartRoutes);
+
+app.use("/api/addresses", addressRoutes);
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {

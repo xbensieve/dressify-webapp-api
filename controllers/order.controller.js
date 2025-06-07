@@ -1,12 +1,13 @@
-import Product from "../models/product.model.js";
+import ProductVariation from "../models/productVariation.model.js";
 import Order from "../models/order.model.js";
 import OrderDetail from "../models/orderDetail.model.js";
 import mongoose from "mongoose";
 
 export const createOrder = async (req, res) => {
-  const { userId, products, method, address } = req.body;
+  const { id } = req.user;
+  const { addresss_id, products } = req.body;
 
-  if (!userId || !products || !method || !address) {
+  if (!addresss_id || !products) {
     return res.status(400).json({
       success: false,
       message: "All fields are required",
@@ -19,45 +20,36 @@ export const createOrder = async (req, res) => {
   try {
     let totalAmount = 0;
     for (const item of products) {
-      const product = await Product.findById(item.productId);
+      const product = await ProductVariation.findById(item._id);
 
       if (!product) {
         throw new Error(`Product with ID ${item.productId} not found`);
       }
-      if (!product.colors.includes(item.color)) {
-        throw new Error(
-          `Color ${item.color} is not available for this product`
-        );
-      }
-      if (!product.sizes.includes(item.size)) {
-        throw new Error(`Size ${item.size} is not available for this product`);
-      }
-      const availableStock = product.stock;
+
+      const availableStock = product.stock_quantity;
 
       if (availableStock < item.quantity) {
         throw new Error(`Insufficient stock for ${product.name}.`);
       }
 
-      totalAmount += item.unitPrice * item.quantity;
+      totalAmount += item.price * item.quantity;
     }
 
     const order = new Order({
-      userId,
-      amount: totalAmount,
-      method,
-      address,
+      user_id: id,
+      address_id: addresss_id,
+      total_amount: totalAmount,
     });
 
     const saveOrder = await order.save({ session });
 
     for (const item of products) {
       const orderDetail = new OrderDetail({
-        orderId: saveOrder._id,
-        productId: item.productId,
+        order_id: saveOrder._id,
+        product_id: item.product_id,
+        variation_id: item.variation_id,
         quantity: item.quantity,
-        unitPrice: item.unitPrice,
-        color: item.color,
-        size: item.size,
+        price_at_purchase: item.price,
       });
       await orderDetail.save({ session });
     }
