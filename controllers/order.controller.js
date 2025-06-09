@@ -5,9 +5,9 @@ import mongoose from "mongoose";
 
 export const createOrder = async (req, res) => {
   const { id } = req.user;
-  const { addresss_id, products } = req.body;
+  const { address_id, products } = req.body;
 
-  if (!addresss_id || !products) {
+  if (!address_id || !products) {
     return res.status(400).json({
       success: false,
       message: "All fields are required",
@@ -37,7 +37,7 @@ export const createOrder = async (req, res) => {
 
     const order = new Order({
       user_id: id,
-      address_id: addresss_id,
+      address_id: address_id,
       total_amount: totalAmount,
     });
 
@@ -47,7 +47,7 @@ export const createOrder = async (req, res) => {
       const orderDetail = new OrderDetail({
         order_id: saveOrder._id,
         product_id: item.product_id,
-        variation_id: item.variation_id,
+        variation_id: item._id,
         quantity: item.quantity,
         price_at_purchase: item.price,
       });
@@ -65,8 +65,6 @@ export const createOrder = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
-
-    console.log(error);
 
     return res.status(500).json({
       success: false,

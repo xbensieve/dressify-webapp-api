@@ -45,7 +45,7 @@ export const generatePaymentUrl = async (req, res) => {
     vnp_TxnRef: orderId,
     vnp_OrderInfo: `Payment for ${orderId}`,
     vnp_OrderType: "other",
-    vnp_Amount: order.amount * 100,
+    vnp_Amount: order.total_amount * 100 * 26000,
     vnp_ReturnUrl: returnUrl,
     vnp_IpAddr: ipAddr,
     vnp_CreateDate: createDate,
