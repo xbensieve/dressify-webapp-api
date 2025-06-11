@@ -2,6 +2,7 @@ import crypto from "crypto";
 import dotenv from "dotenv";
 import moment from "moment";
 import Order from "../models/order.model.js";
+import Transaction from "../models/transaction.model.js";
 import mongoose from "mongoose";
 dotenv.config();
 
@@ -89,7 +90,17 @@ function sortParams(obj) {
 }
 
 export const handlePaymentResponse = async (req, res) => {
-  const { vnp_ResponseCode, vnp_TxnRef } = req.query;
+  const {
+    vnp_ResponseCode,
+    vnp_TxnRef,
+    vnp_TransactionNo,
+    vnp_Amount,
+    vnp_BankCode,
+    vnp_PayDate,
+    vnp_OrderInfo,
+    vnp_CardType,
+    vnp_TransactionStatus,
+  } = req.query;
   try {
     if (!vnp_ResponseCode || !vnp_TxnRef) {
       return res.status(400).json({
@@ -106,14 +117,23 @@ export const handlePaymentResponse = async (req, res) => {
       });
     }
     let redirectUrl = "";
+    let status = "failed";
     if (vnp_ResponseCode !== "00") {
       order.order_status = "pending";
-      redirectUrl = "https://selling-clothes-website-five.vercel.app/failed";
+      redirectUrl = "https://dressify-vesti.vercel.app/failed";
     } else {
       order.order_status = "completed";
-      redirectUrl = "https://selling-clothes-website-five.vercel.app/success";
+      status = "completed";
+      redirectUrl = "https://dressify-vesti.vercel.app/success";
     }
     await order.save();
+    await Transaction.create({
+      order_id: order._id,
+      payment_method: "vnpay",
+      amount: Number(vnp_Amount) / 100,
+      transaction_id: vnp_TransactionNo,
+      status,
+    });
     res.redirect(redirectUrl);
   } catch (error) {
     return res.status(500).json({

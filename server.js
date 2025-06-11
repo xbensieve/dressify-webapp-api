@@ -15,7 +15,7 @@ import generalRoutes from "./routes/general.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import addressRoutes from "./routes/address.route.js";
 import { fetchAIResponse } from "./services/geminiChatBot.js";
-
+import transactionRoutes from "./routes/transaction.route.js";
 dotenv.config();
 
 const app = express();
@@ -39,7 +39,6 @@ wss.on("connection", (socket, req) => {
       }
 
       if (data.type === "init") {
-        // Fetch existing chat history from Redis
         const chatHistoryKey = `chat:${userId}`;
         let chatHistory = await redisClient.get(chatHistoryKey);
         chatHistory = chatHistory ? JSON.parse(chatHistory) : [];
@@ -47,7 +46,6 @@ wss.on("connection", (socket, req) => {
           JSON.stringify({ userId, response: "", history: chatHistory })
         );
       } else if (data.type === "clear") {
-        // Clear chat history for the user
         const chatHistoryKey = `chat:${data.userId}`;
         await redisClient.del(chatHistoryKey);
         console.log(`Cleared chat history for user: ${data.userId}`);
@@ -55,7 +53,6 @@ wss.on("connection", (socket, req) => {
           JSON.stringify({ userId: data.userId, response: "", history: [] })
         );
       } else {
-        // Handle regular chat message
         console.log(`Received from ${userId}: ${data.text || message}`);
         const { response, history } = await fetchAIResponse(
           userId,
@@ -100,6 +97,8 @@ app.use("/api/categories", categoryRoutes);
 app.use("/api/carts", cartRoutes);
 
 app.use("/api/addresses", addressRoutes);
+
+app.use("/api/transactions", transactionRoutes);
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {
