@@ -1,4 +1,5 @@
 import User from "../models/user.model.js";
+import Address from "../models/address.model.js";
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import mailer from "../utils/mailer.js";
@@ -375,10 +376,11 @@ export const profile = async (req, res) => {
         .status(404)
         .json({ success: false, message: "User not found" });
     }
-
+    const addresses = await Address.find({ user_id: id });
     res.status(200).json({
       success: true,
       user,
+      addresses,
     });
   } catch (error) {
     console.error("Error fetching user profile:", error.message);
