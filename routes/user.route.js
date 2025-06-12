@@ -5,6 +5,7 @@ import {
   loginGoogle,
   refreshAccessToken,
   profile,
+  activateAccount,
 } from "../controllers/user.controller.js";
 import { verifyToken } from "../middlewares/authMiddleware.js";
 
@@ -19,5 +20,7 @@ router.post("/refresh-token", refreshAccessToken);
 router.post("/login-google", loginGoogle);
 
 router.get("/me", verifyToken, profile);
+
+router.get("/activate", activateAccount);
 
 export default router;

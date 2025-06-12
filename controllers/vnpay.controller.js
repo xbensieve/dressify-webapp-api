@@ -121,7 +121,8 @@ export const handlePaymentResponse = async (req, res) => {
     let redirectUrl = "";
     let status = "failed";
     if (vnp_ResponseCode !== "00") {
-      order.order_status = "pending";
+      await OrderDetail.deleteMany({ order_id: order._id });
+      await Order.findByIdAndDelete(order._id);
       redirectUrl = "https://dressify-vesti.vercel.app/failed";
     } else {
       order.order_status = "completed";
@@ -133,8 +134,9 @@ export const handlePaymentResponse = async (req, res) => {
           $inc: { stock_quantity: -detail.quantity },
         });
       }
+      await order.save();
     }
-    await order.save();
+
     await Transaction.create({
       order_id: order._id,
       payment_method: "vnpay",
@@ -144,9 +146,15 @@ export const handlePaymentResponse = async (req, res) => {
     });
     res.redirect(redirectUrl);
   } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Error server",
-    });
+    console.error("VNPAY handlePaymentResponse error:", error);
+    if (req.query && req.query.vnp_TxnRef) {
+      try {
+        await OrderDetail.deleteMany({ order_id: req.query.vnp_TxnRef });
+        await Order.findByIdAndDelete(req.query.vnp_TxnRef);
+      } catch (e) {
+        console.error("Error deleting order in catch:", e);
+      }
+    }
+    return res.redirect("https://dressify-vesti.vercel.app/failed");
   }
 };

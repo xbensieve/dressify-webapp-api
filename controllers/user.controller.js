@@ -116,7 +116,10 @@ export const register = async (req, res) => {
     const confirmationCode = Math.floor(
       100000 + Math.random() * 900000
     ).toString();
-
+    const backendUrl = process.env.BACKEND_URL;
+    const activationLink = `${backendUrl}/api/users/activate?email=${encodeURIComponent(
+      email
+    )}&code=${confirmationCode}`;
     //Send confirmation email
     const emailSubject = "Confirm Your Email - XBensieve Registration";
 
@@ -180,6 +183,21 @@ export const register = async (req, res) => {
         padding: 10px 16px;
       }
     }
+      .activation-link {
+      display: inline-block;
+      margin: 20px 0;
+      padding: 12px 24px;
+      background-color: #004e89;
+      color: #fff !important;
+      text-decoration: none;
+      border-radius: 6px;
+      font-size: 18px;
+      font-weight: bold;
+      transition: background 0.2s;
+    }
+    .activation-link:hover {
+      background-color: #003366;
+    }
   </style>
 </head>
 <body>
@@ -190,9 +208,12 @@ export const register = async (req, res) => {
     </div>
     <div class="message">
       <p>Hello,</p>
-      <p>Thank you for signing up with <strong>XBensieve</strong>. To activate your account, please enter the confirmation code below:</p>
+      <p>Thank you for signing up with <strong>XBensieve</strong>. To activate your account, please enter the confirmation code below or click the activation link:</p>
       <div class="code">${confirmationCode}</div>
-      <p>This code is valid for the next 24 hours. If you did not request this, please disregard this message.</p>
+      <p>
+        <a href="${activationLink}" class="activation-link">Kích hoạt tài khoản</a>
+      </p>
+      <p>This code and link are valid for the next 24 hours. If you did not request this, please disregard this message.</p>
       <p>We’re excited to have you on board!</p>
       <p>— The XBensieve Team</p>
     </div>
@@ -327,7 +348,43 @@ export const loginGoogle = async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 };
+// Kích hoạt tài khoản qua link
+export const activateAccount = async (req, res) => {
+  const { email, code } = req.query;
 
+  if (!email || !code) {
+    return res.status(400).send("Thiếu thông tin xác thực.");
+  }
+
+  try {
+    const user = await User.findOne({ email, confirmationCode: code });
+
+    if (!user) {
+      return res.status(400).send("Liên kết không hợp lệ hoặc đã hết hạn.");
+    }
+
+    if (user.isConfirmed) {
+      return res.send("Tài khoản đã được kích hoạt trước đó.");
+    }
+
+    if (
+      user.expireConfirmationCode &&
+      user.expireConfirmationCode < Date.now()
+    ) {
+      return res.status(400).send("Mã xác thực đã hết hạn.");
+    }
+
+    user.isConfirmed = true;
+    user.confirmationCode = null;
+    user.expireConfirmationCode = null;
+    await user.save();
+
+    return res.send("Kích hoạt tài khoản thành công! Bạn có thể đăng nhập.");
+  } catch (error) {
+    console.error("Error activating account:", error.message);
+    res.status(500).send("Có lỗi xảy ra, vui lòng thử lại sau.");
+  }
+};
 //Endpoint refreshToken
 export const refreshAccessToken = async (req, res) => {
   const { refresh_token } = req.body;
