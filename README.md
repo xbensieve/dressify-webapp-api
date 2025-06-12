@@ -1,142 +1,191 @@
-# Dressify E-Commerce
+# Xbensieve E-Commerce API
 
-Welcome to the **Dressify E-Commerce**, a robust backend solution for managing an e-commerce platform. This API provides endpoints for user authentication, product management, order processing, payment integration, and more. Built with scalability and security in mind, it serves as the backbone for modern e-commerce applications.
-
----
-
-## Table of Contents
-
-- [Introduction](#introduction)
-- [Technologies Used](#technologies-used)
-- [Features](#features)
-- [Setup Instructions](#setup-instructions)
-- [Environment Variables](#environment-variables)
-- [API Endpoints](#api-endpoints)
-- [License](#license)
-
----
-
-## Introduction
-
-The **Xbensieve E-Commerce API** is designed to handle the backend operations of an online store. It supports user registration, login (including Google OAuth), product and category management, order creation, and payment processing via VNPAY. The API is built using modern technologies to ensure performance, reliability, and security.
-
----
-
-## Technologies Used
-
-- **Node.js**: JavaScript runtime for building scalable server-side applications.
-- **Express.js**: Web framework for building RESTful APIs.
-- **MongoDB**: NoSQL database for storing application data.
-- **Mongoose**: ODM library for MongoDB.
-- **JWT**: For secure user authentication and authorization.
-- **Nodemailer**: For sending transactional emails.
-- **Google OAuth**: For social login functionality.
-- **Helmet**: For securing HTTP headers.
-- **Express Rate Limit**: To prevent abuse and DDoS attacks.
-- **Cloudinary**: For managing and storing product images.
-- **VNPAY**: For payment gateway integration.
+Welcome to the Xbensieve E-Commerce API! This is a backend RESTful API and WebSocket server for an e-commerce platform focused on selling clothes, accessories, and lifestyle products. The project is built with Node.js, Express, MongoDB, and integrates with services like Cloudinary, Redis, Google OAuth, and VNPAY.
 
 ---
 
 ## Features
 
-- User authentication (JWT-based) and Google OAuth login.
-- Product and category management.
-- Order creation and management.
-- Payment integration with VNPAY.
-- Email notifications for user registration and order updates.
-- Pagination and filtering for product listings.
-- Secure API with rate limiting and input validation.
+- **User Authentication & Registration**
+  - JWT-based authentication (access & refresh tokens)
+  - Email confirmation for new users
+  - Google OAuth login
+  - Role-based access (customer, admin, seller)
+  - TK: User12345
+  - MK: User12345@
+- **Product Management**
+  - CRUD for products, categories, and product variations
+  - Product image uploads (Cloudinary)
+  - Product search with filtering, sorting, and pagination
+- **Cart & Order Management**
+  - Add, update, and remove items in cart
+  - Create orders from cart or direct product selection
+  - View order history and order details
+- **Address Management**
+  - Add, edit, delete, and set default shipping addresses
+- **Payment Integration**
+  - VNPAY payment gateway for order checkout
+  - Transaction tracking
+- **Admin Features**
+  - View transaction details (admin only)
+  - TK: OAdmin2801
+  - MK: Admin123
+- **AI Chatbot**
+  - WebSocket-based Gemini AI chatbot with Redis-powered chat history
+- **Security**
+  - Rate limiting, CORS, Helmet for HTTP headers
+  - Secure password hashing (bcrypt)
+- **Other Integrations**
+  - Nodemailer for transactional emails
+  - Redis for caching/chat history
 
 ---
 
-## Setup Instructions
+## Project Structure
 
-Follow these steps to set up the project locally:
+```
+.
+├── config/           # Configuration for DB, Redis, Cloudinary
+├── controllers/      # Route handlers for business logic
+├── middlewares/      # Express middlewares (auth, etc.)
+├── models/           # Mongoose models (User, Product, Order, etc.)
+├── routes/           # Express route definitions
+├── services/         # External service integrations (AI, Google Auth)
+├── utils/            # Utility functions (mailer, token, cloudinary)
+├── uploads/          # Uploaded files (temporary, gitignored)
+├── server.js         # Main entry point (Express + WebSocket)
+├── package.json
+├── .env
+└── .gitignore
+```
 
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/xbensieve/dressify-webapp-api.git
-   cd selling-clothes-webapp/BE
-2. Install Dependencies:
-   ```bash
-   npm install
-3. Set Up Environment Variables: Create a .env file in the root directory and configure the required variables (see Environment Variables).
-4. Start MongoDB: Ensure MongoDB is running locally or provide a connection string in the .env file.
-5. Run the Application:
-   ``bash
-   npm run dev
->The server will start at http://localhost:5000.
+---
 
-Environment Variables
+## Getting Started
 
-The application requires the following environment variables to be set in a .env file:
-- MONGO_URI=your-mongodb-connection-string
-- JWT_SECRET=your-jwt-secret
-- JWT_REFRESH_SECRET=your-jwt-refresh-secret
-- ADMIN_EMAIL=your-admin-email
-- ADMIN_PASSWORD=your-email-password
-- GOOGLE_CLIENT_ID=your-google-client-id
-- VNP_TMN_CODE=your-vnpay-tmn-code
-- VNP_HASH_SECRET=your-vnpay-hash-secret
-- VNP_RETURN_URL=your-vnpay-return-url
-- CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
-- CLOUDINARY_API_KEY=your-cloudinary-api-key
-- CLOUDINARY_API_SECRET=your-cloudinary-api-secret
+### 1. Prerequisites
+
+- Node.js v16+
+- MongoDB instance
+- Redis instance
+- Cloudinary account
+- Gmail account for sending emails
+- Google Cloud OAuth credentials
+- VNPAY sandbox credentials
+
+### 2. Installation
+
+Clone the repository and install dependencies:
+
+```sh
+git clone https://github.com/xbensieve/dressify-webapp-api.git
+cd xbensieve-ecommerce-api
+npm install
+```
+
+### 3. Environment Variables
+
+Create a `.env` file in the root directory with the following variables:
+
+```
+PORT=5000
+MONGO_URI=your_mongodb_connection_string
+
+JWT_SECRET=your_jwt_secret
+JWT_REFRESH_SECRET=your_jwt_refresh_secret
+
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
+
+ADMIN_EMAIL=your_gmail_address
+ADMIN_PASSWORD=your_gmail_app_password
+
+GOOGLE_CLIENT_ID=your_google_client_id
+
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_USERNAME=default
+REDIS_PASSWORD=your_redis_password
+
+GEMINI_API_KEY=your_gemini_api_key
+
+VNP_TMN_CODE=your_vnpay_tmn_code
+VNP_HASH_SECRET=your_vnpay_hash_secret
+VNP_RETURN_URL=https://your-frontend.com/payment-callback
+
+BACKEND_URL=http://localhost:5000
+```
+
+### 4. Running the Server
+
+Start the development server:
+
+```sh
+npm run dev
+```
+
+- Express API: `http://localhost:5000`
+- WebSocket: `ws://localhost:5000`
 
 ---
 
 ## API Endpoints
 
-### General
+See [routes/general.route.js](routes/general.route.js) for a pretty HTML overview.
 
-* **GET /**: Welcome page with API documentation.
+### Main Endpoints
 
-### User
+- `POST /api/users/register` — Register a new user
+- `POST /api/users/login` — Login with username/password
+- `POST /api/users/login-google` — Login with Google OAuth
+- `GET /api/users/me` — Get user profile (auth required)
+- `GET /api/products/search` — Search products
+- `POST /api/products` — Add product (admin/seller only)
+- `PUT /api/products/:id` — Update product
+- `DELETE /api/products/:id` — Delete product
+- `GET /api/categories` — List categories
+- `POST /api/orders` — Create order
+- `POST /api/orders/from-cart` — Create order from cart
+- `GET /api/orders` — List user orders
+- `POST /api/carts/items` — Add to cart
+- `GET /api/carts/items` — Get cart items
+- `PUT /api/carts/items/:cartItemId` — Update cart item
+- `DELETE /api/carts/items/:cartItemId` — Remove cart item
+- `POST /api/vnpay/generate-payment-url` — Get VNPAY payment URL
+- `GET /api/vnpay/handle-payment-response` — VNPAY callback
 
-* **POST /api/users/register**: Register a new user.
-* **POST /api/users/login**: Login with username and password.
-* **POST /api/users/login-google**: Login with Google OAuth.
-* **POST /api/users/refresh-token**: Refresh access token.
+### WebSocket (AI Chatbot)
 
-### Products
-
-* **GET /api/products**: Get all products (supports pagination).
-* **GET /api/products/\:id**: Get product by ID.
-* **POST /api/products**: Add a new product.
-* **PUT /api/products/\:id**: Update a product.
-* **DELETE /api/products/\:id**: Delete a product.
-
-### Categories
-
-* **GET /api/categories**: Get all categories.
-* **GET /api/categories/\:id**: Get category by ID.
-* **POST /api/categories**: Create a new category.
-* **PUT /api/categories/\:id**: Update a category.
-* **DELETE /api/categories/\:id**: Delete a category.
-
-### Orders
-
-* **POST /api/orders**: Create a new order.
-
-### VNPAY
-
-* **POST /api/vnpay/generate-payment-url**: Generate a payment URL.
-* **GET /api/vnpay/handle-payment-response**: Handle payment response.
-
-## License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
-## Contributing
-
-Contributions are welcome! Please fork the repository and submit a pull request for any improvements or bug fixes.
-
-## Contact
-
-For any inquiries or support, please contact the XBensieve Support Team at [bennguyen.contact@gmail.com](mailto:bennguyen.contact@gmail.com).
+- Connect to `ws://localhost:5000?userId=your_user_id`
+- Send messages as JSON: `{ "type": "message", "text": "your question" }`
+- Special types: `"init"` (get chat history), `"clear"` (clear chat)
 
 ---
 
-This version organizes the information clearly and concisely, making it easy to understand and navigate.
+## Development Notes
 
+- **MongoDB Models:** See [models/](models/) for all data schemas.
+- **Authentication:** JWT tokens required for most endpoints. Use the `Authorization: Bearer <token>` header.
+- **Image Uploads:** Product images are uploaded to Cloudinary.
+- **Email:** Uses Gmail SMTP via Nodemailer for account confirmation.
+- **Payments:** VNPAY integration for payment processing.
+- **AI Chatbot:** Uses Google Gemini API, chat history stored in Redis.
+
+---
+
+## Contributing
+
+Pull requests and issues are welcome! Please open an issue for bugs or feature requests.
+
+---
+
+## License
+
+This project is licensed under the ISC License.
+
+---
+
+## Contact
+
+For questions or support, contact [your_email@example.com](mailto: bennguyen.contact@gmail.com).
