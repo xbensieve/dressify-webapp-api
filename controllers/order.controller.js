@@ -2,18 +2,24 @@ import ProductVariation from "../models/productVariation.model.js";
 import Order from "../models/order.model.js";
 import OrderDetail from "../models/orderDetail.model.js";
 import CartItem from "../models/cartItem.model.js";
+import Product from "../models/product.model.js";
+import ProductImage from "../models/productImage.model.js";
+import Address from "../models/address.model.js";
 import mongoose from "mongoose";
 
 export const createOrder = async (req, res) => {
   const { id } = req.user;
-  const { address_id, products } = req.body;
+  const { products } = req.body;
 
-  if (!address_id || !products) {
+  if (!products) {
     return res.status(400).json({
       success: false,
       message: "All fields are required",
     });
   }
+
+  const addresses = await Address.find({ user_id: id }).lean();
+  const defaultAddress = addresses.find((addr) => addr.is_default);
 
   const session = await mongoose.startSession();
   session.startTransaction();
@@ -38,7 +44,7 @@ export const createOrder = async (req, res) => {
 
     const order = new Order({
       user_id: id,
-      address_id: address_id,
+      address_id: defaultAddress._id,
       total_amount: totalAmount,
     });
 
@@ -76,18 +82,17 @@ export const createOrder = async (req, res) => {
 
 export const createOrderFromCart = async (req, res) => {
   const { id } = req.user;
-  const { address_id, cartItemIds } = req.body;
-  if (
-    !address_id ||
-    !cartItemIds ||
-    !Array.isArray(cartItemIds) ||
-    cartItemIds.length === 0
-  ) {
+  const { cartItemIds } = req.body;
+  if (!cartItemIds || !Array.isArray(cartItemIds) || cartItemIds.length === 0) {
     return res.status(400).json({
       success: false,
-      message: "Address and selected cart items are required",
+      message: "Selected cart items are required",
     });
   }
+
+  const addresses = await Address.find({ user_id: id }).lean();
+  const defaultAddress = addresses.find((addr) => addr.is_default);
+
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
@@ -124,7 +129,7 @@ export const createOrderFromCart = async (req, res) => {
 
     const order = new Order({
       user_id: id,
-      address_id,
+      address_id: defaultAddress._id,
       total_amount: totalAmount,
     });
     const savedOrder = await order.save({ session });
@@ -148,6 +153,73 @@ export const createOrderFromCart = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     session.endSession();
+    return res.status(500).json({
+      success: false,
+      message: error.message || "Server error",
+    });
+  }
+};
+
+export const getOrdersByUser = async (req, res) => {
+  const { id } = req.user;
+  const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
+  const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 10;
+  const skip = (page - 1) * limit;
+  try {
+    const totalOrders = await Order.countDocuments({ user_id: id });
+
+    const orders = await Order.find({ user_id: id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const ordersWithDetails = await Promise.all(
+      orders.map(async (order) => {
+        const details = await OrderDetail.find({ order_id: order._id })
+          .populate({
+            path: "product_id",
+            model: Product,
+            select: "name description price category_id seller_id",
+          })
+          .populate({
+            path: "variation_id",
+            model: ProductVariation,
+            select: "size color price stock_quantity",
+          })
+          .lean();
+
+        const detailsWithImages = await Promise.all(
+          details.map(async (detail) => {
+            const images = await ProductImage.find({
+              productId: detail.product_id?._id || detail.product_id,
+            })
+              .sort({ isPrimary: -1, displayOrder: 1 })
+              .select("imageUrl isPrimary displayOrder altText -_id")
+              .lean();
+            return {
+              ...detail,
+              images,
+            };
+          })
+        );
+
+        return {
+          ...order,
+          details: detailsWithImages,
+        };
+      })
+    );
+
+    return res.status(200).json({
+      success: true,
+      page,
+      limit,
+      totalOrders,
+      totalPages: Math.ceil(totalOrders / limit),
+      orders: ordersWithDetails,
+    });
+  } catch (error) {
     return res.status(500).json({
       success: false,
       message: error.message || "Server error",
