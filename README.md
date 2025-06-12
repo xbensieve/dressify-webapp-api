@@ -188,4 +188,4 @@ This project is licensed under the ISC License.
 
 ## Contact
 
-For questions or support, contact [your_email@example.com](mailto: bennguyen.contact@gmail.com).
+For questions or support, contact [bennguyen.contact@gmail.com](mailto: bennguyen.contact@gmail.com).
