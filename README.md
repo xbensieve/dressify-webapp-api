@@ -79,7 +79,7 @@ Clone the repository and install dependencies:
 
 ```sh
 git clone https://github.com/xbensieve/dressify-webapp-api.git
-cd xbensieve-ecommerce-api
+cd dressify-webapp-api
 npm install
 ```
 
