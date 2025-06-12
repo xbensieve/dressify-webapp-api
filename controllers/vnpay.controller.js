@@ -3,6 +3,8 @@ import dotenv from "dotenv";
 import moment from "moment";
 import Order from "../models/order.model.js";
 import Transaction from "../models/transaction.model.js";
+import ProductVariation from "../models/productVariation.model.js";
+import OrderDetail from "../models/orderDetail.model.js";
 import mongoose from "mongoose";
 dotenv.config();
 
@@ -125,6 +127,12 @@ export const handlePaymentResponse = async (req, res) => {
       order.order_status = "completed";
       status = "completed";
       redirectUrl = "https://dressify-vesti.vercel.app/success";
+      const orderDetails = await OrderDetail.find({ order_id: order._id });
+      for (const detail of orderDetails) {
+        await ProductVariation.findByIdAndUpdate(detail.variation_id, {
+          $inc: { stock_quantity: -detail.quantity },
+        });
+      }
     }
     await order.save();
     await Transaction.create({
