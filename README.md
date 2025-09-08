@@ -1,6 +1,58 @@
-# Xbensieve E-Commerce API
+# E-Commerce System API
 
-Welcome to the Xbensieve E-Commerce API! This is a backend RESTful API and WebSocket server for an e-commerce platform focused on selling clothes, accessories, and lifestyle products. The project is built with Node.js, Express, MongoDB, and integrates with services like Cloudinary, Redis, Google OAuth, and VNPAY.
+Welcome to the E-Commerce System API! This is a backend RESTful API and WebSocket server for an e-commerce platform focused on selling clothes, accessories, and lifestyle products. The project is built with Node.js, Express, MongoDB, and integrates with services like Cloudinary, Redis, Google OAuth, and VNPAY.
+
+---
+
+## Prerequisites
+
+Before you begin, make sure you have installed and configured the following tools and services:
+
+- **Node.js** (>= 18.x recommended)  
+  - Download and install from [nodejs.org](https://nodejs.org/)  
+  - Verify installation:  
+    ```bash
+    node -v
+    npm -v
+    ```
+
+- **Visual Studio Code**  
+  - Recommended IDE for development, download from [code.visualstudio.com](https://code.visualstudio.com/)  
+
+- **MongoDB**  
+  - Install MongoDB Community Edition or use [MongoDB Atlas](https://www.mongodb.com/atlas)  
+  - Make sure MongoDB service is running:  
+    ```bash
+    mongod --version
+    ```
+
+- **Cloudinary Account** (for image storage)  
+  - Sign up and get your `CLOUDINARY_URL` from [cloudinary.com](https://cloudinary.com/)  
+
+- **Redis** (used as cache for messages or sessions)  
+  - Install Redis server:  
+    - Linux/macOS:  
+      ```bash
+      brew install redis
+      ```  
+    - Windows: [Download Redis](https://redis.io/download)  
+  - Verify installation:  
+    ```bash
+    redis-server --version
+    ```
+
+- **Google OAuth 2.0**  
+  - Create a project and obtain `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from [Google Cloud Console](https://console.cloud.google.com/)  
+
+- **VNPAY Account**  
+  - Register an account and obtain configuration values (`VNP_TMN_CODE`, `VNP_HASH_SECRET`, `VNP_URL`) from VNPAY.  
+
+- **Gemini AI API (Google AI Studio)**  
+  - Sign up at [Google AI Studio](https://aistudio.google.com/)  
+  - Generate an **API Key** and add it to your `.env` file as:  
+    ```env
+    GEMINI_API_KEY=your_api_key_here
+    ```
 
 ---
 
@@ -11,8 +63,6 @@ Welcome to the Xbensieve E-Commerce API! This is a backend RESTful API and WebSo
   - Email confirmation for new users
   - Google OAuth login
   - Role-based access (customer, admin, seller)
-  - TK: User12345
-  - MK: User12345@
 - **Product Management**
   - CRUD for products, categories, and product variations
   - Product image uploads (Cloudinary)
@@ -26,10 +76,12 @@ Welcome to the Xbensieve E-Commerce API! This is a backend RESTful API and WebSo
 - **Payment Integration**
   - VNPAY payment gateway for order checkout
   - Transaction tracking
-- **Admin Features**
-  - View transaction details (admin only)
-  - TK: OAdmin2801
-  - MK: Admin123
+- **Admin Features**  
+  - Manage users, products, categories, and orders  
+  - Access sales statistics and analytics  
+  - Special admin account available for testing:  
+    - **Username:** `OAdmin2801`  
+    - **Password:** `Admin123@`
 - **AI Chatbot**
   - WebSocket-based Gemini AI chatbot with Redis-powered chat history
 - **Security**
@@ -63,17 +115,7 @@ Welcome to the Xbensieve E-Commerce API! This is a backend RESTful API and WebSo
 
 ## Getting Started
 
-### 1. Prerequisites
-
-- Node.js v16+
-- MongoDB instance
-- Redis instance
-- Cloudinary account
-- Gmail account for sending emails
-- Google Cloud OAuth credentials
-- VNPAY sandbox credentials
-
-### 2. Installation
+### 1. Installation
 
 Clone the repository and install dependencies:
 
@@ -83,7 +125,7 @@ cd dressify-webapp-api
 npm install
 ```
 
-### 3. Environment Variables
+### 2. Environment Variables
 
 Create a `.env` file in the root directory with the following variables:
 
@@ -117,7 +159,7 @@ VNP_RETURN_URL=https://your-frontend.com/payment-callback
 BACKEND_URL=http://localhost:5000
 ```
 
-### 4. Running the Server
+### 3. Running the Server
 
 Start the development server:
 
@@ -132,10 +174,7 @@ npm run dev
 
 ## API Endpoints
 
-See [routes/general.route.js](routes/general.route.js) for a pretty HTML overview.
-
 ### Main Endpoints
-
 - `POST /api/users/register` — Register a new user
 - `POST /api/users/login` — Login with username/password
 - `POST /api/users/login-google` — Login with Google OAuth
