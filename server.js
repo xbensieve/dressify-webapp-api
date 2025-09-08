@@ -16,6 +16,7 @@ import cartRoutes from "./routes/cart.route.js";
 import addressRoutes from "./routes/address.route.js";
 import { fetchAIResponse } from "./services/geminiChatBot.js";
 import transactionRoutes from "./routes/transaction.route.js";
+import adminRoutes from "./routes/admin.route.js";
 dotenv.config();
 
 const app = express();
@@ -82,7 +83,7 @@ const limiter = rateLimit({
 
 app.use("/", generalRoutes);
 
-//app.use("/api", limiter);
+app.use("/api", limiter);
 
 app.use("/api/products", productRoutes);
 
@@ -99,6 +100,8 @@ app.use("/api/carts", cartRoutes);
 app.use("/api/addresses", addressRoutes);
 
 app.use("/api/transactions", transactionRoutes);
+
+app.use("/api/admin", adminRoutes);
 
 const PORT = process.env.PORT || 5000;
 httpServer.listen(PORT, () => {

@@ -34,3 +34,20 @@ coverage/
 # Miscellaneous
 *.bak
 *.old
+
+# Ignore specific files
+secret-config.json
+credentials.json
+.env.local
+.env.*.local
+
+# Ignore Mac system files
+.DS_Store
+.AppleDouble
+.LSOverride
+# Thumbnails
+._*
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
