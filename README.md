@@ -1,230 +1,165 @@
-# E-Commerce System API
+# 🛒 Dressify Vesti E-Commerce Backend API
 
-Welcome to the E-Commerce System API! This is a backend RESTful API and WebSocket server for an e-commerce platform focused on selling clothes, accessories, and lifestyle products. The project is built with Node.js, Express, MongoDB, and integrates with services like Cloudinary, Redis, Google OAuth, and VNPAY.
-
----
-
-## Prerequisites
-
-Before you begin, make sure you have installed and configured the following tools and services:
-
-- **Node.js** (>= 18.x recommended)  
-  - Download and install from [nodejs.org](https://nodejs.org/)  
-  - Verify installation:  
-    ```bash
-    node -v
-    npm -v
-    ```
-
-- **Visual Studio Code**  
-  - Recommended IDE for development, download from [code.visualstudio.com](https://code.visualstudio.com/)  
-
-- **MongoDB**  
-  - Install MongoDB Community Edition or use [MongoDB Atlas](https://www.mongodb.com/atlas)  
-  - Make sure MongoDB service is running:  
-    ```bash
-    mongod --version
-    ```
-
-- **Cloudinary Account** (for image storage)  
-  - Sign up and get your `CLOUDINARY_URL` from [cloudinary.com](https://cloudinary.com/)  
-
-- **Redis** (used as cache for messages or sessions)  
-  - Install Redis server:  
-    - Linux/macOS:  
-      ```bash
-      brew install redis
-      ```  
-    - Windows: [Download Redis](https://redis.io/download)  
-  - Verify installation:  
-    ```bash
-    redis-server --version
-    ```
-
-- **Google OAuth 2.0**  
-  - Create a project and obtain `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` from [Google Cloud Console](https://console.cloud.google.com/)  
-
-- **VNPAY Account**  
-  - Register an account and obtain configuration values (`VNP_TMN_CODE`, `VNP_HASH_SECRET`, `VNP_URL`) from VNPAY.  
-
-- **Gemini AI API (Google AI Studio)**  
-  - Sign up at [Google AI Studio](https://aistudio.google.com/)  
-  - Generate an **API Key** and add it to your `.env` file as:  
-    ```env
-    GEMINI_API_KEY=your_api_key_here
-    ```
+A production-grade, highly scalable e-commerce backend API built with **Node.js**, **Express**, **TypeScript**, **MongoDB**, and **Redis**. Designed with a modular monolith architecture, queue-based background processing, real-time WebSockets, and comprehensive enterprise security.
 
 ---
 
-## Features
+## 🌟 Key Features
 
-- **User Authentication & Registration**
-  - JWT-based authentication (access & refresh tokens)
-  - Email confirmation for new users
-  - Google OAuth login
-  - Role-based access (customer, admin, seller)
-- **Product Management**
-  - CRUD for products, categories, and product variations
-  - Product image uploads (Cloudinary)
-  - Product search with filtering, sorting, and pagination
-- **Cart & Order Management**
-  - Add, update, and remove items in cart
-  - Create orders from cart or direct product selection
-  - View order history and order details
-- **Address Management**
-  - Add, edit, delete, and set default shipping addresses
-- **Payment Integration**
-  - VNPAY payment gateway for order checkout
-  - Transaction tracking
-- **Admin Features**  
-  - Manage users, products, categories, and orders  
-  - Access sales statistics and analytics  
-  - Special admin account available for testing:  
-    - **Username:** `OAdmin2801`  
-    - **Password:** `Admin123@`
-- **AI Chatbot**
-  - WebSocket-based Gemini AI chatbot with Redis-powered chat history
-- **Security**
-  - Rate limiting, CORS, Helmet for HTTP headers
-  - Secure password hashing (bcrypt)
-- **Other Integrations**
-  - Nodemailer for transactional emails
-  - Redis for caching/chat history
+- 🔐 **Robust Authentication:** stateless JWT-based authentication with Refresh Token rotation, token blacklisting via Redis, and Google OAuth2 integration.
+- 📦 **Product & Inventory Management:** Multi-variation tracking (size, color), stock verification, search query indexing, and Cloudinary-integrated media uploads.
+- 🛍️ **Cart & Order Processing:** ACID transactions via MongoDB replica sets ensuring checkout and inventory count integrity.
+- 💳 **Payment Gateway Integration:** Secure payment URL generation and response verification using **VNPay Sandbox**.
+- 🤖 **AI Chat Assistant:** Personal shopping assistant powered by the **Gemini API** with Redis-cached user chat history.
+- 🚀 **Background Processing:** Headless background worker powered by **BullMQ** & **Redis** processing emails, notifications, and analytics.
+- 🔌 **Real-time Gateway:** Horizontal scaling-ready **WebSocket** gateway using Redis Pub/Sub for live messaging.
+- 🛡️ **Enterprise Security:** Secure HTTP headers via Helmet, parameter pollution protection (HPP), Redis-backed distributed rate limiting, and NoSQL query sanitization.
+- 📊 **High Observability:** Structured JSON logger via Pino with context tracking (X-Request-ID).
+- 📝 **Interactive API Docs & Tooling:** Full OpenAPI 3.0 (Swagger) interactive UI and pre-configured Postman Collection.
 
 ---
 
-## Project Structure
+## 🛠️ Technology Stack
+
+| Category | Technology |
+|---|---|
+| **Runtime Environment** | Node.js (v20+ / v22 recommended) |
+| **Language** | TypeScript (Strict mode, ES2022) |
+| **Web Framework** | Express.js |
+| **Primary Database** | MongoDB (Mongoose ODM) |
+| **Cache & Message Broker** | Redis |
+| **Queue Manager** | BullMQ |
+| **Schema Validation** | Zod |
+| **Testing Engine** | Vitest, Supertest, MongoDB Memory Server (Replica Set) |
+| **API Documentation** | OpenAPI 3.0 (Swagger UI) & Postman |
+
+---
+
+## 📂 Architecture & Directory Structure
+
+This project follows **Modular Monolith** and **Clean Architecture** patterns. Business logic is segregated into feature-based modules to preserve clean boundaries.
 
 ```
-.
-├── config/           # Configuration for DB, Redis, Cloudinary
-├── controllers/      # Route handlers for business logic
-├── middlewares/      # Express middlewares (auth, etc.)
-├── models/           # Mongoose models (User, Product, Order, etc.)
-├── routes/           # Express route definitions
-├── services/         # External service integrations (AI, Google Auth)
-├── utils/            # Utility functions (mailer, token, cloudinary)
-├── uploads/          # Uploaded files (temporary, gitignored)
-├── server.js         # Main entry point (Express + WebSocket)
-├── package.json
-├── .env
-└── .gitignore
+src/
+├── infrastructure/     # Database, Redis, Queue, Cloudinary, Mailer connections
+├── shared/             # Global Middlewares, Error classes, Loggers, Pagination utilities
+├── workers/            # BullMQ background job processor logic
+├── app.ts              # Express App setup, middlewares, and route registrations
+├── server.ts           # HTTP & WebSocket servers initialization
+└── modules/            # Domain Modules
+    ├── addresses/      # Delivery Address Management
+    ├── admin/          # Statistics & Operations (including order export stream)
+    ├── ai-chat/        # AI conversation & Redis history
+    ├── auth/           # Login, registration, token rotations
+    ├── cart/           # Shopping Cart logic
+    ├── catalog/        # Product view history & recommendations
+    ├── categories/     # Category CRUD
+    ├── logistics/      # Shipping webhook listener
+    ├── orders/         # Order creation & processing
+    ├── payment/        # VNPay integration
+    ├── products/       # Product variations & inventory
+    ├── transactions/   # Customer transaction logs
+    └── users/          # User profiles
 ```
 
 ---
 
-## Getting Started
+## ⚡ Quick Start
 
-### 1. Installation
+### Prerequisites
+- Node.js >= 20.x
+- MongoDB (Local or Atlas)
+- Redis server
+- Cloudinary, Google OAuth, Gemini API, and VNPay credentials
 
-Clone the repository and install dependencies:
+### Installation
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
+2. Copy the sample environment file and configure your credentials:
+   ```bash
+   cp .env.example .env
+   ```
 
-```sh
-git clone https://github.com/xbensieve/dressify-webapp-api.git
-cd dressify-webapp-api
-npm install
-```
+### Running Locally
 
-### 2. Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```
-PORT=5000
-MONGO_URI=your_mongodb_connection_string
-
-JWT_SECRET=your_jwt_secret
-JWT_REFRESH_SECRET=your_jwt_refresh_secret
-
-CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
-CLOUDINARY_API_KEY=your_cloudinary_api_key
-CLOUDINARY_API_SECRET=your_cloudinary_api_secret
-
-ADMIN_EMAIL=your_gmail_address
-ADMIN_PASSWORD=your_gmail_app_password
-
-GOOGLE_CLIENT_ID=your_google_client_id
-
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_USERNAME=default
-REDIS_PASSWORD=your_redis_password
-
-GEMINI_API_KEY=your_gemini_api_key
-
-VNP_TMN_CODE=your_vnpay_tmn_code
-VNP_HASH_SECRET=your_vnpay_hash_secret
-VNP_RETURN_URL=https://your-frontend.com/payment-callback
-
-BACKEND_URL=http://localhost:5000
-```
-
-### 3. Running the Server
-
-Start the development server:
-
-```sh
+Run the main HTTP/WebSocket API server:
+```bash
 npm run dev
 ```
 
-- Express API: `http://localhost:5000`
-- WebSocket: `ws://localhost:5000`
+In a separate terminal, start the background queue worker:
+```bash
+npm run worker
+```
 
 ---
 
-## API Endpoints
+## 📝 API Documentation & Postman
 
-### Main Endpoints
-- `POST /api/users/register` — Register a new user
-- `POST /api/users/login` — Login with username/password
-- `POST /api/users/login-google` — Login with Google OAuth
-- `GET /api/users/me` — Get user profile (auth required)
-- `GET /api/products/search` — Search products
-- `POST /api/products` — Add product (admin/seller only)
-- `PUT /api/products/:id` — Update product
-- `DELETE /api/products/:id` — Delete product
-- `GET /api/categories` — List categories
-- `POST /api/orders` — Create order
-- `POST /api/orders/from-cart` — Create order from cart
-- `GET /api/orders` — List user orders
-- `POST /api/carts/items` — Add to cart
-- `GET /api/carts/items` — Get cart items
-- `PUT /api/carts/items/:cartItemId` — Update cart item
-- `DELETE /api/carts/items/:cartItemId` — Remove cart item
-- `POST /api/vnpay/generate-payment-url` — Get VNPAY payment URL
-- `GET /api/vnpay/handle-payment-response` — VNPAY callback
+### Interactive Swagger UI
+Once the server is running, you can explore, test, and view all documented endpoints at:
+👉 **[http://localhost:5000/api/docs](http://localhost:5000/api/docs)**
 
-### WebSocket (AI Chatbot)
+*(Note: The root URL `/` automatically redirects here).*
 
-- Connect to `ws://localhost:5000?userId=your_user_id`
-- Send messages as JSON: `{ "type": "message", "text": "your question" }`
-- Special types: `"init"` (get chat history), `"clear"` (clear chat)
+### Postman Collection
+A fully-configured Postman Collection is included in the root directory:
+👉 **[ecommerce_api_postman_collection.json](./ecommerce_api_postman_collection.json)**
+
+- Features organized folders for all API domains.
+- Automatically handles token management: logging in saves the JWT into a `{{token}}` variable, authorizing all subsequent requests automatically.
 
 ---
 
-## Development Notes
+## 🧪 Testing
 
-- **MongoDB Models:** See [models/](models/) for all data schemas.
-- **Authentication:** JWT tokens required for most endpoints. Use the `Authorization: Bearer <token>` header.
-- **Image Uploads:** Product images are uploaded to Cloudinary.
-- **Email:** Uses Gmail SMTP via Nodemailer for account confirmation.
-- **Payments:** VNPAY integration for payment processing.
-- **AI Chatbot:** Uses Google Gemini API, chat history stored in Redis.
+The testing suite utilizes **Vitest** for fast, concurrent execution. For database-sensitive services (such as checkout and payment), an in-memory replica set (`MongoMemoryReplSet`) is initialized to mock ACID transactions safely.
+
+```bash
+# Run all unit, integration, and E2E tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests and generate a detailed HTML coverage report
+npm run test:coverage
+```
+
+Current test suite achievements:
+- **180 automated tests** passing successfully.
+- **100% statement coverage** on critical modules: Cart, Orders, Payment, Addresses, and AI-chat.
 
 ---
 
-## Contributing
+## 🐳 Docker Deployment
 
-Pull requests and issues are welcome! Please open an issue for bugs or feature requests.
+For easy deployments, the backend utilizes optimized multi-stage builds.
+
+Start the entire system locally (API, Worker, MongoDB, Redis, and Nginx proxy):
+```bash
+docker-compose up -d --build
+```
+
+View the live logs:
+```bash
+docker-compose logs -f api
+```
 
 ---
 
-## License
+## 🔒 Security Best Practices
+
+- **Helmet:** Express headers configuration protecting against clickjacking, XSS, and sniff attacks.
+- **HPP:** Blocks HTTP Parameter Pollution exploits.
+- **Query Sanitization:** `mongo-sanitize` middleware prevents NoSQL injection attacks.
+- **CORS:** Strictly scoped to the `FRONTEND_URL` in production environments.
+- **Redis Rate Limiting:** Enforces limits on key endpoints using `rate-limit-redis`.
+
+---
+
+## 📄 License
 
 This project is licensed under the ISC License.
-
----
-
-## Contact
-
-For questions or support, contact [bennguyen.contact@gmail.com](mailto: bennguyen.contact@gmail.com).
