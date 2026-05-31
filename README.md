@@ -1,214 +1,165 @@
-# dressify-vesti-api
+# 🛒 Dressify Vesti E-Commerce Backend API
 
-A production-grade, highly scalable e-commerce backend API. Built with Node.js, Express, TypeScript, MongoDB, and Redis. Features a modular monolith architecture, queue-based background processing, real-time WebSockets, and comprehensive security middleware.
+A production-grade, highly scalable e-commerce backend API built with **Node.js**, **Express**, **TypeScript**, **MongoDB**, and **Redis**. Designed with a modular monolith architecture, queue-based background processing, real-time WebSockets, and comprehensive enterprise security.
 
-## Features
+---
 
-- **Robust Authentication:** JWT-based auth with refresh token rotation, blacklisting, and Google OAuth integration.
-- **Product & Inventory Management:** Variations (size, color), stock tracking, and Cloudinary image uploads.
-- **Cart & Order Processing:** Transactions, cart management, and MongoDB ACID transactions for checkout integrity.
-- **Payment Gateway Integration:** Integrated with VNPay for secure transactions.
-- **Background Processing:** BullMQ & Redis for async tasks (emails, analytics, image processing).
-- **Real-time Capabilities:** Native WebSocket gateway for live updates.
-- **Enterprise Security:** Helmet, HPP (HTTP Parameter Pollution prevention), advanced rate-limiting, CORS, and MongoDB query sanitization.
-- **Observability:** Structured JSON logging via Pino, ready for GCP Cloud Logging/Datadog.
-- **API Documentation:** Interactive OpenAPI 3.0 (Swagger) UI.
+## 🌟 Key Features
 
-## Tech Stack
+- 🔐 **Robust Authentication:** stateless JWT-based authentication with Refresh Token rotation, token blacklisting via Redis, and Google OAuth2 integration.
+- 📦 **Product & Inventory Management:** Multi-variation tracking (size, color), stock verification, search query indexing, and Cloudinary-integrated media uploads.
+- 🛍️ **Cart & Order Processing:** ACID transactions via MongoDB replica sets ensuring checkout and inventory count integrity.
+- 💳 **Payment Gateway Integration:** Secure payment URL generation and response verification using **VNPay Sandbox**.
+- 🤖 **AI Chat Assistant:** Personal shopping assistant powered by the **Gemini API** with Redis-cached user chat history.
+- 🚀 **Background Processing:** Headless background worker powered by **BullMQ** & **Redis** processing emails, notifications, and analytics.
+- 🔌 **Real-time Gateway:** Horizontal scaling-ready **WebSocket** gateway using Redis Pub/Sub for live messaging.
+- 🛡️ **Enterprise Security:** Secure HTTP headers via Helmet, parameter pollution protection (HPP), Redis-backed distributed rate limiting, and NoSQL query sanitization.
+- 📊 **High Observability:** Structured JSON logger via Pino with context tracking (X-Request-ID).
+- 📝 **Interactive API Docs & Tooling:** Full OpenAPI 3.0 (Swagger) interactive UI and pre-configured Postman Collection.
+
+---
+
+## 🛠️ Technology Stack
 
 | Category | Technology |
 |---|---|
-| **Runtime** | Node.js (v20+ / v22 recommended) |
+| **Runtime Environment** | Node.js (v20+ / v22 recommended) |
 | **Language** | TypeScript (Strict mode, ES2022) |
-| **Framework** | Express.js |
-| **Database** | MongoDB (Mongoose) |
-| **Cache & Queues** | Redis, BullMQ |
-| **Validation** | Zod |
-| **Testing** | Vitest, Supertest, MongoDB Memory Server |
-| **Tooling** | ESLint, Prettier, tsx, tsc-alias |
+| **Web Framework** | Express.js |
+| **Primary Database** | MongoDB (Mongoose ODM) |
+| **Cache & Message Broker** | Redis |
+| **Queue Manager** | BullMQ |
+| **Schema Validation** | Zod |
+| **Testing Engine** | Vitest, Supertest, MongoDB Memory Server (Replica Set) |
+| **API Documentation** | OpenAPI 3.0 (Swagger UI) & Postman |
 
-## Architecture Overview
+---
 
-This project implements a **Modular Monolith** using **Clean Architecture** principles.
+## 📂 Architecture & Directory Structure
 
-- **`src/modules/`**: Feature-based slices (e.g., Auth, Products, Orders, Cart). Each module contains:
-  - `*.routes.ts` (Express routing)
-  - `*.controller.ts` (HTTP request/response handling)
-  - `*.service.ts` (Core business logic)
-  - `*.repository.ts` (Database interaction abstraction)
-  - `*.schema.ts` (Mongoose models)
-  - `*.validator.ts` (Zod schemas)
-- **`src/infrastructure/`**: External services setup (MongoDB, Redis, BullMQ, WebSockets, Cloudinary, Mailer).
-- **`src/shared/`**: Global utilities (Error handling, Logger, Rate Limiters, Types).
-- **`src/workers/`**: BullMQ consumer logic executed in a separate process/container.
+This project follows **Modular Monolith** and **Clean Architecture** patterns. Business logic is segregated into feature-based modules to preserve clean boundaries.
 
-## Installation
+```
+src/
+├── infrastructure/     # Database, Redis, Queue, Cloudinary, Mailer connections
+├── shared/             # Global Middlewares, Error classes, Loggers, Pagination utilities
+├── workers/            # BullMQ background job processor logic
+├── app.ts              # Express App setup, middlewares, and route registrations
+├── server.ts           # HTTP & WebSocket servers initialization
+└── modules/            # Domain Modules
+    ├── addresses/      # Delivery Address Management
+    ├── admin/          # Statistics & Operations (including order export stream)
+    ├── ai-chat/        # AI conversation & Redis history
+    ├── auth/           # Login, registration, token rotations
+    ├── cart/           # Shopping Cart logic
+    ├── catalog/        # Product view history & recommendations
+    ├── categories/     # Category CRUD
+    ├── logistics/      # Shipping webhook listener
+    ├── orders/         # Order creation & processing
+    ├── payment/        # VNPay integration
+    ├── products/       # Product variations & inventory
+    ├── transactions/   # Customer transaction logs
+    └── users/          # User profiles
+```
+
+---
+
+## ⚡ Quick Start
 
 ### Prerequisites
-- Node.js >= 20
-- MongoDB instance (local or Atlas)
+- Node.js >= 20.x
+- MongoDB (Local or Atlas)
 - Redis server
-- Cloudinary Account
-- Google OAuth Client ID
-- VNPay Sandbox Credentials
+- Cloudinary, Google OAuth, Gemini API, and VNPay credentials
 
-### Setup Steps
+### Installation
 1. Clone the repository and install dependencies:
-```bash
-npm install
-```
-2. Copy the environment variables:
-```bash
-cp .env.example .env
-```
+   ```bash
+   npm install
+   ```
+2. Copy the sample environment file and configure your credentials:
+   ```bash
+   cp .env.example .env
+   ```
 
-## Environment Variables
+### Running Locally
 
-Configure the `.env` file with your credentials:
-
-| Variable | Description |
-|---|---|
-| `NODE_ENV` | `development`, `production`, or `test` |
-| `PORT` | API Server port (Default: 5000) |
-| `BACKEND_URL` | Base URL for backend (e.g., `http://localhost:5000`) |
-| `FRONTEND_URL` | Frontend URL for CORS configuration |
-| `MONGO_URI` | MongoDB connection string |
-| `REDIS_HOST` / `PORT` / `USERNAME` / `PASSWORD` | Redis connection details |
-| `JWT_SECRET` / `JWT_REFRESH_SECRET` | 32+ character secrets for token signing |
-| `JWT_ACCESS_EXPIRES_IN` / `JWT_REFRESH_EXPIRES_IN` | Token lifespans (e.g., `15m`, `7d`) |
-| `CLOUDINARY_*` | Credentials for image storage |
-| `ADMIN_EMAIL` / `PASSWORD` | Gmail SMTP credentials for sending emails |
-| `GOOGLE_CLIENT_ID` | OAuth2 Client ID |
-| `GEMINI_API_KEY` | Key for AI features (if applicable) |
-| `VNP_*` | VNPay integration credentials & endpoint configuration |
-| `TIMEZONE` | e.g., `Asia/Ho_Chi_Minh` |
-
-## Available Scripts
-
-| Command | Description |
-|---|---|
-| `npm run dev` | Starts API in dev mode using `tsx` (auto-kills dangling port 5000 first) |
-| `npm run build` | Compiles TS to JS into `dist/` and resolves path aliases |
-| `npm start` | Runs the compiled production server (`dist/server.js`) |
-| `npm run worker` | Starts the BullMQ background worker process |
-| `npm run typecheck` | Validates TypeScript without emitting files |
-| `npm run lint` / `lint:fix` | Runs ESLint / Fixes auto-fixable issues |
-| `npm run format` | Formats code with Prettier |
-| `npm test` | Runs the Vitest test suite |
-| `npm run test:e2e` | Runs End-to-End tests |
-
-## Running Locally
-
-To run the API server in watch mode:
+Run the main HTTP/WebSocket API server:
 ```bash
 npm run dev
 ```
 
-To run the background workers (in a separate terminal):
+In a separate terminal, start the background queue worker:
 ```bash
 npm run worker
 ```
 
-## Build Instructions
+---
 
-The project uses `tsc` coupled with `tsc-alias` to resolve `@modules/*`, `@shared/*` imports mapped in `tsconfig.json`.
+## 📝 API Documentation & Postman
 
-```bash
-npm run build
-```
-Build output is generated in the `dist/` directory.
+### Interactive Swagger UI
+Once the server is running, you can explore, test, and view all documented endpoints at:
+👉 **[http://localhost:5000/api/docs](http://localhost:5000/api/docs)**
 
-## API Documentation
+*(Note: The root URL `/` automatically redirects here).*
 
-Once the server is running, the interactive **Swagger/OpenAPI UI** is available at:
+### Postman Collection
+A fully-configured Postman Collection is included in the root directory:
+👉 **[ecommerce_api_postman_collection.json](./ecommerce_api_postman_collection.json)**
 
-👉 `http://localhost:5000/api/docs`
+- Features organized folders for all API domains.
+- Automatically handles token management: logging in saves the JWT into a `{{token}}` variable, authorizing all subsequent requests automatically.
 
-The root path (`/`) automatically redirects to this documentation.
+---
 
-## Authentication & Security
+## 🧪 Testing
 
-- **Flow**: Stateless JWT. Short-lived Access Tokens (passed via `Bearer` header) and long-lived Refresh Tokens.
-- **Middleware**:
-  - `verifyToken`: Validates JWT and injects user context.
-  - `requireSeller` / `requireAdmin`: Role-based access control (RBAC).
-  - `apiLimiter` / `authLimiter` / `uploadLimiter`: Distributed Redis-backed rate limiting.
-
-## Request/Response Format
-
-The API enforces strict JSON responses structured globally via the `errorHandler` middleware.
-
-**Success Response:**
-```json
-{
-  "success": true,
-  "data": { ... },
-  "message": "Optional message"
-}
-```
-
-**Error Response:**
-```json
-{
-  "success": false,
-  "code": "UNAUTHORIZED",
-  "message": "Invalid token"
-}
-```
-
-## Testing
-
-The project uses **Vitest** and **Supertest**. Tests are categorized into `unit`, `integration`, and `e2e`. An in-memory MongoDB (`mongodb-memory-server`) is spun up for database tests.
+The testing suite utilizes **Vitest** for fast, concurrent execution. For database-sensitive services (such as checkout and payment), an in-memory replica set (`MongoMemoryReplSet`) is initialized to mock ACID transactions safely.
 
 ```bash
-# Run all tests
+# Run all unit, integration, and E2E tests
 npm test
 
-# Run tests with coverage report
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests and generate a detailed HTML coverage report
 npm run test:coverage
-
-# Run specific E2E suite
-npm run test:e2e
 ```
 
-## Linting & Formatting
+Current test suite achievements:
+- **180 automated tests** passing successfully.
+- **100% statement coverage** on critical modules: Cart, Orders, Payment, Addresses, and AI-chat.
 
-Code quality is enforced using **ESLint** (with TypeScript plugins) and **Prettier**.
+---
+
+## 🐳 Docker Deployment
+
+For easy deployments, the backend utilizes optimized multi-stage builds.
+
+Start the entire system locally (API, Worker, MongoDB, Redis, and Nginx proxy):
 ```bash
-npm run lint
-npm run format
-```
-
-## Docker Usage
-
-The project includes a multi-stage `Dockerfile` optimized for production, separating dependencies, build, and runner stages, executing as a non-root user.
-
-A `docker-compose.yml` is provided for full stack orchestration.
-
-```bash
-# Start the entire stack (API, Worker, MongoDB, Redis, Nginx)
 docker-compose up -d --build
+```
 
-# View logs
+View the live logs:
+```bash
 docker-compose logs -f api
 ```
 
-### Docker Compose Architecture
-- **api**: Main Express backend on port 5000.
-- **worker**: Headless process processing BullMQ jobs.
-- **mongodb**: Stateful database container.
-- **redis**: Cache and PubSub broker.
-- **nginx**: Reverse proxy exposing the API on ports 80/443.
+---
 
-## Security Practices
+## 🔒 Security Best Practices
 
-- **Helmet**: Secures Express apps by setting various HTTP headers.
-- **HPP**: Protects against HTTP Parameter Pollution attacks.
-- **Mongo-Sanitize**: Prevents NoSQL injection by stripping forbidden characters (`$`, `.`) from inputs.
-- **CORS**: Strictly restricted to `FRONTEND_URL` in production.
-- **Rate Limiting**: Distributed across instances via `rate-limit-redis`.
-- **Secrets**: No secrets checked into source control; managed entirely via `.env`.
+- **Helmet:** Express headers configuration protecting against clickjacking, XSS, and sniff attacks.
+- **HPP:** Blocks HTTP Parameter Pollution exploits.
+- **Query Sanitization:** `mongo-sanitize` middleware prevents NoSQL injection attacks.
+- **CORS:** Strictly scoped to the `FRONTEND_URL` in production environments.
+- **Redis Rate Limiting:** Enforces limits on key endpoints using `rate-limit-redis`.
 
-## License
+---
 
-ISC License.
+## 📄 License
+
+This project is licensed under the ISC License.

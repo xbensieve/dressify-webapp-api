@@ -20,6 +20,9 @@ import paymentRoutes from '@modules/payment/payment.routes';
 import transactionsRoutes from '@modules/transactions/transactions.routes';
 import addressesRoutes from '@modules/addresses/addresses.routes';
 import adminRoutes from '@modules/admin/admin.routes';
+import promotionsRoutes from '@modules/promotions/promotions.routes';
+import logisticsRoutes from '@modules/logistics/logistics.routes';
+import catalogRoutes from '@modules/catalog/catalog.routes';
 
 export const createApp = () => {
   const app = express();
@@ -63,8 +66,8 @@ export const createApp = () => {
     '/api/docs',
     swaggerUi.serve,
     swaggerUi.setup(swaggerSpec, {
-      customSiteTitle: 'Xbensieve API Docs',
-      customCss: '.swagger-ui .topbar { background: #1a1a2e } .swagger-ui .topbar-wrapper img { display:none } .swagger-ui .topbar-wrapper::before { content:"dressify-vesti-api"; color:#fff; font-size:1.2rem; font-weight:700; padding-left:1rem; }',
+      customSiteTitle: 'Ecommerce API',
+      customCss: '.swagger-ui .topbar { background: #1a1a2e } .swagger-ui .topbar-wrapper img { display:none } .swagger-ui .topbar-wrapper::before { content:"Ecommerce API"; color:#fff; font-size:1.2rem; font-weight:700; padding-left:1rem; }',
       swaggerOptions: { persistAuthorization: true, docExpansion: 'none', filter: true },
     }),
   );
@@ -88,6 +91,9 @@ export const createApp = () => {
   app.use('/api/transactions', transactionsRoutes);
   app.use('/api/addresses', addressesRoutes);
   app.use('/api/admin', adminRoutes);
+  app.use('/api/promotions', promotionsRoutes);
+  app.use('/api/v1/webhooks', logisticsRoutes);
+  app.use('/api/catalog', catalogRoutes);
 
   // ── 404 handler ──────────────────────────────────────────────────────────
   app.use((_req, res) => {

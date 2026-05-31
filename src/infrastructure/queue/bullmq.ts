@@ -10,7 +10,7 @@ const connection = {
   password: env.REDIS_PASSWORD,
 };
 
-export type QueueName = 'email' | 'notifications' | 'image-processing' | 'analytics';
+export type QueueName = 'email' | 'notifications' | 'shipment' | 'image-processing' | 'analytics';
 
 const queues = new Map<QueueName, Queue>();
 

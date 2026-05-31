@@ -3,9 +3,9 @@ import type { OpenAPIV3 } from 'openapi-types';
 export const swaggerSpec: OpenAPIV3.Document = {
   openapi: '3.0.3',
   info: {
-    title: 'dressify-vesti-api',
+    title: 'Ecommerce API',
     version: '2.0.0',
-    description: 'e-commerce backend',
+    description: 'Ecommerce API',
     contact: { name: 'Xbensieve Team', email: 'origamitobichii2801@gmail.com' },
   },
   servers: [
@@ -24,6 +24,9 @@ export const swaggerSpec: OpenAPIV3.Document = {
     { name: 'Transactions', description: 'Transaction history' },
     { name: 'Admin', description: 'Admin operations' },
     { name: 'Health', description: 'System health' },
+    { name: 'Catalog', description: 'Catalog history and recently viewed products' },
+    { name: 'Promotions', description: 'Vouchers and flash sales' },
+    { name: 'Logistics', description: 'Inbound logistics status updates' },
   ],
   components: {
     securitySchemes: {
@@ -431,5 +434,273 @@ export const swaggerSpec: OpenAPIV3.Document = {
     '/api/admin/statistics': {
       get: { tags: ['Admin'], summary: 'Platform statistics', security: [{ bearerAuth: [] }], responses: { '200': { description: 'Stats: users, orders, revenue, products' } } },
     },
+    '/api/admin/export/orders': {
+      get: {
+        tags: ['Admin'],
+        summary: 'Stream all orders as a CSV file (Admin only)',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          { name: 'status', in: 'query', schema: { type: 'string', enum: ['pending', 'completed', 'cancelled'] }, description: 'Filter by order status' },
+          { name: 'from', in: 'query', schema: { type: 'string', format: 'date-time' }, description: 'Filter by start date (ISO 8601)' },
+          { name: 'to', in: 'query', schema: { type: 'string', format: 'date-time' }, description: 'Filter by end date (ISO 8601)' },
+          { name: 'sellerId', in: 'query', schema: { type: 'string' }, description: 'Filter by seller ID' }
+        ],
+        responses: {
+          '200': {
+            description: 'CSV stream initiated',
+            headers: {
+              'Content-Type': { schema: { type: 'string', example: 'text/csv' } },
+              'Content-Disposition': { schema: { type: 'string', example: 'attachment; filename="orders_export_xyz.csv"' } }
+            }
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '403': { description: 'Forbidden — Admin only' }
+        }
+      }
+    },
+    '/api/catalog/recently-viewed': {
+      post: {
+        tags: ['Catalog'],
+        summary: 'Record product view in history',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['productId'],
+                properties: {
+                  productId: { type: 'string', example: '60c72b2f9b1d8e123456789a' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Product view recorded',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Product view recorded' }
+                  }
+                }
+              }
+            }
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' }
+        }
+      },
+      get: {
+        tags: ['Catalog'],
+        summary: 'Get recently viewed products',
+        security: [{ bearerAuth: [] }],
+        parameters: [
+          {
+            name: 'limit',
+            in: 'query',
+            schema: { type: 'integer', minimum: 1, maximum: 20, default: 20 },
+            description: 'Number of items to retrieve (max 20)'
+          }
+        ],
+        responses: {
+          '200': {
+            description: 'List of recently viewed products',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'array',
+                      items: { $ref: '#/components/schemas/Product' }
+                    },
+                    total: { type: 'integer', example: 1 }
+                  }
+                }
+              }
+            }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' }
+        }
+      },
+      delete: {
+        tags: ['Catalog'],
+        summary: 'Clear recently viewed history',
+        security: [{ bearerAuth: [] }],
+        responses: {
+          '200': {
+            description: 'History cleared',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    message: { type: 'string', example: 'Recently viewed history cleared' }
+                  }
+                }
+              }
+            }
+          },
+          '401': { $ref: '#/components/responses/Unauthorized' }
+        }
+      }
+    },
+    '/api/promotions/vouchers/apply': {
+      post: {
+        tags: ['Promotions'],
+        summary: 'Apply a voucher discount to an order',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['code', 'orderAmount'],
+                properties: {
+                  code: { type: 'string', example: 'SAVE20' },
+                  orderAmount: { type: 'number', minimum: 0.01, example: 150 }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Voucher applied successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        code: { type: 'string', example: 'SAVE20' },
+                        discountType: { type: 'string', enum: ['percentage', 'fixed'], example: 'percentage' },
+                        discountValue: { type: 'number', example: 20 },
+                        calculatedDiscount: { type: 'number', example: 30 },
+                        finalAmount: { type: 'number', example: 120 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' }
+        }
+      }
+    },
+    '/api/promotions/flash-sales/reserve': {
+      post: {
+        tags: ['Promotions'],
+        summary: 'Reserve flash sale stock for a product variation',
+        security: [{ bearerAuth: [] }],
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['variationId', 'quantity'],
+                properties: {
+                  variationId: { type: 'string', example: '60c72b2f9b1d8e123456789b' },
+                  quantity: { type: 'integer', minimum: 1, maximum: 100, example: 2 }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Inventory reserved successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        variationId: { type: 'string', example: '60c72b2f9b1d8e123456789b' },
+                        quantity: { type: 'integer', example: 2 },
+                        remaining: { type: 'integer', example: 8 },
+                        salePrice: { type: 'number', example: 80 }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '400': { $ref: '#/components/responses/ValidationError' },
+          '401': { $ref: '#/components/responses/Unauthorized' },
+          '404': { $ref: '#/components/responses/NotFound' }
+        }
+      }
+    },
+    '/api/v1/webhooks/shipment-status': {
+      post: {
+        tags: ['Logistics'],
+        summary: 'Receive carrier shipment tracking updates',
+        requestBody: {
+          required: true,
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                required: ['event_id', 'order_id', 'tracking_number', 'status', 'carrier_code', 'event_timestamp'],
+                properties: {
+                  event_id: { type: 'string', example: 'EVT-100234' },
+                  order_id: { type: 'string', example: '60c72b2f9b1d8e123456789c' },
+                  tracking_number: { type: 'string', example: 'VNPOST123456' },
+                  status: { type: 'string', enum: ['pending', 'picked_up', 'in_transit', 'out_for_delivery', 'delivered', 'failed_attempt', 'returned', 'cancelled'], example: 'in_transit' },
+                  carrier_code: { type: 'string', example: 'VNPOST' },
+                  description: { type: 'string', example: 'Departed from Hanoi hub' },
+                  location: { type: 'string', example: 'Hanoi' },
+                  event_timestamp: { type: 'string', format: 'date-time', example: '2026-05-31T14:05:00Z' }
+                }
+              }
+            }
+          }
+        },
+        responses: {
+          '200': {
+            description: 'Webhook processed successfully',
+            content: {
+              'application/json': {
+                schema: {
+                  type: 'object',
+                  properties: {
+                    success: { type: 'boolean', example: true },
+                    data: {
+                      type: 'object',
+                      properties: {
+                        event_id: { type: 'string', example: 'EVT-100234' },
+                        duplicate: { type: 'boolean', example: false }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          '400': { $ref: '#/components/responses/ValidationError' }
+        }
+      }
+    }
   },
 };

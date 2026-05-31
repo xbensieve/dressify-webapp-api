@@ -32,9 +32,9 @@ const bootstrap = async () => {
     });
 
     httpServer.listen(env.PORT, () => {
-      logger.info(`🚀 HTTP server started at http://localhost:${env.PORT}`);
-      logger.info(`🔌 WebSocket server running at ws://localhost:${env.PORT}`);
-      logger.info(`🌍 Environment: ${env.NODE_ENV}`);
+      logger.info(`HTTP server started at http://localhost:${env.PORT}`);
+      logger.info(`WebSocket server running at ws://localhost:${env.PORT}`);
+      logger.info(`Environment: ${env.NODE_ENV}`);
       resolve();
     });
   });

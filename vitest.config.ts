@@ -6,11 +6,17 @@ export default defineConfig({
     globals: true,
     environment: 'node',
     setupFiles: ['src/tests/setup.ts'],
+    exclude: [
+      '**/node_modules/**',
+      '**/dist/**',
+      // Empty spec file — swagger docs, not a test file
+      'src/shared/docs/swagger.spec.ts',
+    ],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],
       include: ['src/**/*.ts'],
-      exclude: ['src/tests/**', 'src/**/*.d.ts', 'src/server.ts'],
+      exclude: ['src/tests/**', 'src/**/*.d.ts', 'src/server.ts', 'src/shared/docs/**'],
       thresholds: {
         global: {
           branches: 70,
@@ -20,8 +26,8 @@ export default defineConfig({
         },
       },
     },
-    testTimeout: 30000,
-    hookTimeout: 30000,
+    testTimeout: 60000,   // 60s for streaming tests
+    hookTimeout: 60000,
   },
   resolve: {
     alias: {

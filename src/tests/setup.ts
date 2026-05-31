@@ -1,8 +1,8 @@
-import { MongoMemoryServer } from 'mongodb-memory-server';
+import { MongoMemoryReplSet } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
 import { beforeAll, afterAll, afterEach, vi } from 'vitest';
 
-let mongod: MongoMemoryServer;
+let mongod: MongoMemoryReplSet;
 
 // Mock environment before imports
 vi.mock('@shared/config/env.js', () => ({
@@ -58,7 +58,7 @@ vi.mock('@infrastructure/mailer/mailer.js', () => ({
 }));
 
 beforeAll(async () => {
-  mongod = await MongoMemoryServer.create();
+  mongod = await MongoMemoryReplSet.create({ replSet: { count: 1 } });
   const uri = mongod.getUri();
   await mongoose.connect(uri);
 });

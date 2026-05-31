@@ -23,7 +23,7 @@ const createRedisClient = (): RedisClientType => {
     },
   }) as RedisClientType;
 
-  c.on('connect', () => logger.info('✅ Redis connected'));
+  c.on('connect', () => logger.info('Redis connected'));
   c.on('ready', () => logger.debug('Redis ready'));
   c.on('error', (err: Error) => logger.error({ err }, 'Redis client error'));
   c.on('end', () => logger.warn('Redis connection closed'));

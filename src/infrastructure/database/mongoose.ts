@@ -20,7 +20,7 @@ export const connectDB = async (): Promise<void> => {
         readPreference: 'primaryPreferred',
       });
 
-      logger.info('✅ MongoDB connected');
+      logger.info('MongoDB connected');
 
       mongoose.connection.on('disconnected', () => {
         logger.warn('MongoDB disconnected — attempting reconnect...');

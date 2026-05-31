@@ -82,19 +82,39 @@ describe('Auth Integration Tests', () => {
     });
 
     it('should return profile with valid token', async () => {
-      await request(app).post('/api/users/register').send({ ...testUser, username: 'me_test', email: 'me@example.com', phone: '0999000001' });
-      await UserModel.findOneAndUpdate({ username: 'me_test' }, { isConfirmed: true });
+      // Register a dedicated test user for this test
+      const meUser = {
+        username: `me_test_${Date.now()}`,
+        first_name: 'Me', last_name: 'Test',
+        password: 'password123',
+        phone: '0999111222',
+        email: `me_${Date.now()}@example.com`,
+        dob: '1995-06-15',
+        role: 'customer',
+      };
+      const regRes = await request(app).post('/api/users/register').send(meUser);
+      expect(regRes.status).toBe(201);
 
-      const loginRes = await request(app).post('/api/users/login').send({ username: 'me_test', password: testUser.password });
+      // Confirm the user so login works
+      await UserModel.findOneAndUpdate({ username: meUser.username }, { isConfirmed: true });
+
+      // Login to get a valid JWT
+      const loginRes = await request(app).post('/api/users/login').send({
+        username: meUser.username,
+        password: meUser.password,
+      });
+      expect(loginRes.status).toBe(200);
       const token = loginRes.body.access_token as string;
+      expect(token).toBeTruthy();
 
+      // Use the token to GET /me
       const res = await request(app)
         .get('/api/users/me')
         .set('Authorization', `Bearer ${token}`);
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
-      expect(res.body.user).toMatchObject({ username: 'me_test' });
+      expect(res.body.user).toMatchObject({ username: meUser.username });
     });
   });
 

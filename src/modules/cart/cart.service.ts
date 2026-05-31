@@ -20,13 +20,15 @@ const buildCartResponse = async (userId: string) => {
   const productImages = await ProductImageModel.find({ productId: { $in: productIds } });
 
   const items = cartItems.map((item) => {
-    const product = item.product_id as unknown as { _id: string; [key: string]: unknown };
-    const variation = item.variation_id as unknown as Record<string, unknown>;
+    const product = item.product_id as unknown as { _id: string; toObject?: () => Record<string, unknown>; [key: string]: unknown };
+    const variation = item.variation_id as unknown as { toObject?: () => Record<string, unknown>; [key: string]: unknown };
+    const productObj = product.toObject ? product.toObject() : product;
+    const variationObj = variation.toObject ? variation.toObject() : variation;
     const images = productImages
-      .filter((img) => img.productId.toString() === String(product._id))
+      .filter((img) => img.productId.toString() === String(productObj._id))
       .map((img) => img.imageUrl);
 
-    return { product: { ...product, images }, variation, quantity: item.quantity, cartItemId: item._id };
+    return { product: { ...productObj, images }, variation: variationObj, quantity: item.quantity, cartItemId: item._id };
   });
 
   return {

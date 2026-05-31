@@ -9,6 +9,7 @@ import { logger } from '@shared/logger/pino';
 import { startEmailWorker } from './email.worker';
 import { startImageProcessingWorker } from './imageProcessing.worker';
 import { startAnalyticsWorker } from './analytics.worker';
+import { startShipmentWorker } from './shipment.worker';
 
 const bootstrap = async () => {
   await Promise.all([connectDB(), connectRedis()]);
@@ -17,6 +18,7 @@ const bootstrap = async () => {
     startEmailWorker(),
     startImageProcessingWorker(),
     startAnalyticsWorker(),
+    startShipmentWorker(),
   ];
 
   logger.info(`🔧 ${workers.length} workers started`);
